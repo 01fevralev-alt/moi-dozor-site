@@ -327,6 +327,7 @@ function draftText(d) {
     "Сделали:", ...c.done.map(s => `- ${esc(s)}`),
     ...(c.result?.length ? ["Что изменилось:", ...c.result.map(s => `- ${esc(s)}`)] : []),
     ...NUMS.map(([label, i]) => `${label}: ${c.nums[i] ?? "—"}`),
+    ...(c.nums[2] > 5 ? [`⚠️ <b>Монтаж ${c.nums[2]} дней</b> — проверьте даты начала и окончания монтажа в сделке. Исправили — напишите в группу <code>кейс ${d.lead}</code>.`] : []),
     `<i>Из CRM на страницу:</i> ${c.timeline?.length ? `ход работ (${c.timeline.map(t => `${esc(t.title.toLowerCase())} ${esc(t.date)}`).join(" · ")})` : "дат нет"}` +
       `${c.works?.length ? ` · работ по счёту: ${c.works.length}` : ""}`, "",
     d.story ? "✍️ История учтена." : "✍️ <b>Для подробной страницы</b> ответьте: <code>история:</code> с чем пришёл клиент · что было особенного на объекте · что изменилось. Можно надиктовать голосом → текстом.",
@@ -404,7 +405,19 @@ async function buildDraft(leadId, { update = false } = {}) {
     } catch (e) { console.warn(`Фото ${f.name} пропущено: ${e.message}`); } // одно битое фото не должно ронять весь черновик
   });
   d.photos = d.photos.filter(Boolean);
-  d.case = await writeCase(raw);
+  // Пересборка (например, после исправления дат в сделке): ручная работа из прежнего черновика не теряется —
+  // история, выбор фото и обложка (фото узнаём по id на Google Диске), адрес, если его правили вручную
+  if (old) {
+    const byDrive = new Map(d.photos.map(p => [p.drive, p.n]));
+    const was = n => byDrive.get(old.photos?.find(p => p.n === n)?.drive);
+    d.off = (old.off || []).map(was).filter(Boolean);
+    d.cover = was(old.cover) || d.cover;
+    if (d.off.includes(d.cover)) d.cover = used(d)[0]?.n || 1;
+    d.story = old.story || "";
+    d.addrManual = old.addrManual || false;
+  }
+  d.case = await writeCase(raw, d.story);
+  if (d.addrManual && old?.case?.addr) d.case.addr = old.case.addr;
   await putJson(`drafts/${leadId}.json`, d);
 
   await sendDraft(d);
@@ -591,7 +604,7 @@ async function onReply(msg) {
     catch (e) { console.error(e); return say(`Не получилось переписать: ${esc(e.message)}`, { reply: mid }); }
   } else {
     const full = parseFull(text, d.case);
-    if (full) d.case = full;
+    if (full) { if (full.addr !== d.case.addr) d.addrManual = true; d.case = full; }
     else {
       try { d.case = await rewriteCase(d, text.slice(0, 500)); }
       catch (e) { console.error(e); return say(`Не получилось переписать: ${esc(e.message)}`, { reply: mid }); }
