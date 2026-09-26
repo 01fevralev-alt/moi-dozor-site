@@ -203,12 +203,18 @@ const SYSTEM = `Ты пишешь кейсы для сайта «Мой Дозо
 Если кабель прокладывал сам клиент — не приписывай прокладку кабеля нам.
 Не описывай точное расположение камер и слепые зоны объекта.
 
-ОБРАЗЕЦ СТИЛЯ (выдуманный объект — факты из него не переносить, бери только манеру):
-{"title": "Видеть двор и въезд, пока хозяев нет дома",
- "lead": "Поставили шесть уличных камер вокруг дома и настроили просмотр с телефона. Теперь, уезжая на работу, хозяин в любой момент видит, кто подъехал к воротам и что происходит во дворе.",
- "task": ["Дом только достроили, и хозяева много времени проводят в городе. Хотелось спокойно уезжать и знать, что во дворе всё в порядке.", "Кабель под камеры заложили ещё на стройке, поэтому оставалось аккуратно поставить камеры, собрать запись и научить хозяина пользоваться системой."],
- "done": ["Поставили 6 уличных камер: въезд, двор и периметр", "Собрали систему записи — регистратор и коммутатор", "Настроили просмотр живого видео и архива с телефона", "Показали, как найти нужный момент в записи"],
- "result": ["Двор и въезд видно с телефона из любого места", "Если что-то случится, запись поможет разобраться", "Хозяева спокойно уезжают из дома"]}
+Словарь — как мы говорим:
+- «видео в реальном времени» или «смотреть онлайн»; никогда не «живое видео»;
+- запись и архив — это регистратор и жёсткий диск; коммутатор к записи не относится, он питает камеры и связывает их с регистратором;
+- «доступ с телефона», «архив», «ИК-подсветка», «уличные камеры».
+
+Каждый кейс — свой: не повторяй формулировки из списка «уже на сайте» и начинай заголовок и lead по-разному.
+Пиши живо и образно, но без выдумок: цепляющая деталь из истории или из типа объекта лучше общих слов.
+
+ОБРАЗЕЦ МАНЕРЫ (выдуманный объект; из него нельзя брать ни факты, ни фразы — только интонацию):
+{"title": "Спокойно уезжать с дачи на всю неделю",
+ "lead": "Четыре камеры смотрят на калитку, гараж и сад, а хозяйка проверяет их в перерыве на работе. Если кто-то появится у забора ночью — это будет на записи.",
+ "task": ["Зимой на участок дважды заходили посторонние, и каждый раз узнавали об этом только весной."]}
 
 Ответ — только JSON, без пояснений.`;
 const SCHEMA = `{
@@ -227,7 +233,7 @@ async function gpt(user) {
     headers: { Authorization: `Bearer ${IAM}`, "x-folder-id": env("FOLDER_ID"), "Content-Type": "application/json" },
     body: JSON.stringify({
       modelUri: `gpt://${env("FOLDER_ID")}/yandexgpt/latest`,
-      completionOptions: { stream: false, temperature: 0.5, maxTokens: "1500" },
+      completionOptions: { stream: false, temperature: 0.75, maxTokens: "1500" },
       messages: [{ role: "system", text: SYSTEM }, { role: "user", text: user }]
     })
   }, { what: "YandexGPT", ms: 40000 });
@@ -257,7 +263,8 @@ function works(fixed, bill) {
   return got.length && Math.abs(got.length - orig.length) <= 1 ? got : orig;
 }
 
-function writeCase(raw, story = "") {
+// avoid — формулировки уже опубликованных кейсов: нейросеть не должна их повторять
+function writeCase(raw, story = "", avoid = []) {
   const data = [
     `Тип объекта: ${raw.type}`, `Город: ${raw.city || "—"}`, `Адрес из CRM: ${raw.addrRaw || "—"}`,
     `Частный объект: ${raw.private ? "да" : "нет"}`, `Размещение камер: ${raw.placement || "—"}`, `Услуга: ${raw.service || "—"}`,
@@ -267,11 +274,14 @@ function writeCase(raw, story = "") {
     ...(/под ключ/i.test(raw.service) || !raw.service ? ["Всегда входит в монтаж под ключ: настройка записи на регистратор, удалённый доступ с телефона, обучение клиента"] : []),
     `История от руководителя: ${story || "—"}`
   ].join("\n");
-  return gpt(`Данные объекта:\n${data}\n\nНапиши кейс в формате JSON:\n${SCHEMA}`).then(c => clean(c, raw));
+  const already = avoid.length ? `\n\nУже на сайте (эти формулировки не повторять):\n${avoid.map(x => `- ${x}`).join("\n")}` : "";
+  return gpt(`Данные объекта:\n${data}${already}\n\nНапиши кейс в формате JSON:\n${SCHEMA}`).then(c => clean(c, raw));
 }
 
 const rewriteCase = (d, wish) => gpt(`Вот кейс в JSON:\n${JSON.stringify(caseFields(d.case), null, 1)}\n` +
-  (d.story ? `История от руководителя: ${d.story}\n` : "") + `\nПерепиши его по просьбе: «${wish}». ` +
+  (d.story ? `История от руководителя: ${d.story}\n` : "") +
+  (d.avoid?.length ? `Уже на сайте (эти формулировки не повторять):\n${d.avoid.map(x => `- ${x}`).join("\n")}\n` : "") +
+  `\nПерепиши его по просьбе: «${wish}». ` +
   `Цифры и факты не меняй, новых не придумывай. Верни JSON в той же форме:\n${SCHEMA}`)
   .then(c => clean(c, { ...d.raw, cams: d.case.nums[0], cable: d.case.nums[1], days: d.case.nums[2], works: (d.case.works || []).join("\n"), timeline: d.case.timeline || [] }));
 const caseFields = c => ({ addr: c.addr, title: c.title, lead: c.lead, task: c.task, done: c.done, result: c.result, works: c.works });
@@ -320,7 +330,8 @@ function draftText(d) {
     ? `📷 Фото: ${on.map(p => p.n).join(", ") || "все убраны"}${on.length ? ` · обложка — ${d.cover}` : ""}`
     : "📷 <b>Фото нет</b> — кейс выйдет отдельной страницей, на главной его не будет";
   const lines = [
-    `📝 <b>${d.update ? "Обновление кейса" : "Черновик кейса"}</b> · <a href="https://${esc(amoDomain())}/leads/detail/${d.lead}">сделка №${d.lead}</a>`,
+    `📝 <b>${d.update ? "Обновление кейса" : "Черновик кейса"}${d.pos ? ` ${d.pos}` : ""}</b> · <a href="https://${esc(amoDomain())}/leads/detail/${d.lead}">сделка №${d.lead}</a>`,
+    ...(d.textFromSite ? [`♻️ Текст${d.photosFromSite ? " и фото" : ""} — как на сайте; из CRM обновлены цифры и даты. Переписать текст — ответьте, например, «перепиши».`] : []),
     photos, "",
     `Тип: ${esc(c.type)} · Город: ${esc(c.city)}`,
     ...FIELDS.map(([label, k]) => `${label}: ${esc(Array.isArray(c[k]) ? c[k].join(" ") : c[k]) || "—"}`),
@@ -405,19 +416,45 @@ async function buildDraft(leadId, { update = false } = {}) {
     } catch (e) { console.warn(`Фото ${f.name} пропущено: ${e.message}`); } // одно битое фото не должно ронять весь черновик
   });
   d.photos = d.photos.filter(Boolean);
-  // Пересборка (например, после исправления дат в сделке): ручная работа из прежнего черновика не теряется —
-  // история, выбор фото и обложка (фото узнаём по id на Google Диске), адрес, если его правили вручную
-  if (old) {
+  const batch = await getJson(BATCH);
+  if (batch?.current === leadId && batch.list.length > 1) d.pos = `${batch.done + 1} из ${batch.list.length}`;
+
+  // Обновление опубликованного кейса: фото, обложка и текст — как на сайте (источник правды — cases.json на GitHub).
+  // Фото узнаём по «отпечатку» в имени файла: NN-<md5(id на Диске)>.webp. Из CRM свежие только цифры и даты.
+  const all = await publishedCases();
+  const site = published ? all.find(c => c.slug === published.slug) || null : null;
+  // Чем уже сказано в других кейсах — чтобы тексты не повторялись
+  d.avoid = all.filter(c => c !== site).flatMap(c => [c.title, ...(c.done || [])]).filter(Boolean).slice(0, 40);
+  if (site) {
+    const hashes = (site.photos || []).map(p => (p.match(/-([0-9a-f]{6})\.webp$/) || [])[1]).filter(Boolean);
+    const byHash = new Map(d.photos.map(p => [p.hash, p.n]));
+    if (hashes.some(h => byHash.has(h))) {
+      d.off = d.photos.filter(p => !hashes.includes(p.hash)).map(p => p.n);
+      d.cover = byHash.get(hashes[0]) || used(d)[0]?.n || 1;
+      d.photosFromSite = true;
+    }
+  }
+  // Иначе (или если фото на сайте не нашлись): ручная работа из прежнего черновика —
+  // выбор фото и обложка (фото узнаём по id на Google Диске)
+  if (old && !d.photosFromSite) {
     const byDrive = new Map(d.photos.map(p => [p.drive, p.n]));
     const was = n => byDrive.get(old.photos?.find(p => p.n === n)?.drive);
     d.off = (old.off || []).map(was).filter(Boolean);
     d.cover = was(old.cover) || d.cover;
     if (d.off.includes(d.cover)) d.cover = used(d)[0]?.n || 1;
-    d.story = old.story || "";
-    d.addrManual = old.addrManual || false;
   }
-  d.case = await writeCase(raw, d.story);
-  if (d.addrManual && old?.case?.addr) d.case.addr = old.case.addr;
+  d.story = old?.story || "";
+  d.addrManual = old?.addrManual || false;
+  if (site) {
+    // Текст уже одобрен и опубликован — не переписываем; переписать можно ответом «перепиши»
+    d.case = { type: raw.type || site.type, city: raw.city || site.city, addr: site.addr, title: site.title, lead: site.lead,
+      task: site.task || [], done: site.done || [], result: site.result || [], works: site.works || [],
+      nums: [raw.cams, raw.cable, raw.days], timeline: raw.timeline?.length ? raw.timeline : site.timeline || [] };
+    d.textFromSite = true;
+  } else {
+    d.case = await writeCase(raw, d.story, d.avoid);
+    if (d.addrManual && old?.case?.addr) d.case.addr = old.case.addr;
+  }
   await putJson(`drafts/${leadId}.json`, d);
 
   await sendDraft(d);
@@ -501,6 +538,7 @@ async function publish(leadId) {
   if (!on.length) await putJson(`waiting/${leadId}.json`, { until: Date.now() + WAIT_DAYS * 864e5, last: Date.now() });
   await say(`✅ <b>Кейс опубликован</b> · сделка №${leadId}\n<a href="${esc(url)}">${esc(url)}</a>\nНа сайте появится через 1–2 минуты.` +
     (on.length ? "" : `\nФото нет — ${WAIT_DAYS} дней раз в день проверяю папку и пришлю обновление, если появятся.`), { lead: leadId });
+  await nextInBatch(leadId);
 }
 
 /* ---------- Кнопки и ответы из MAX ---------- */
@@ -536,13 +574,15 @@ async function onCallback(cb, msg) {
   if (action === "rej") {
     d.status = "rejected";
     await putJson(`drafts/${lead}.json`, d);
-    return answer(cb, msg, "Отклонено", `✖️ Черновик по сделке №${lead} отклонён.`, redo);
+    await answer(cb, msg, "Отклонено", `✖️ Черновик по сделке №${lead} отклонён.`, redo);
+    return nextInBatch(lead);
   }
   if (action === "wait") {
     d.status = "waiting";
     await putJson(`drafts/${lead}.json`, d);
     await putJson(`waiting/${lead}.json`, { until: Date.now() + WAIT_DAYS * 864e5, last: Date.now() });
-    return answer(cb, msg, "Жду фото", `⏳ Жду фото по сделке №${lead}: ${WAIT_DAYS} дней раз в день проверяю папку. Появятся — пришлю новый черновик.`, redo);
+    await answer(cb, msg, "Жду фото", `⏳ Жду фото по сделке №${lead}: ${WAIT_DAYS} дней раз в день проверяю папку. Появятся — пришлю новый черновик.`, redo);
+    return nextInBatch(lead);
   }
   return answer(cb, msg, "Готово");
 }
@@ -556,20 +596,42 @@ function parseCaseCommand(text) {
   return ids.length ? [...new Set(ids)] : null;
 }
 
+// Очередь «кейсы N1, N2…»: черновики по одному. Следующий — после «Опубликовать», «Отклонить» или «Ждать фото».
+// batch.json: { list: [сделки по порядку], done: сколько пройдено, current: сделка в работе }
+const BATCH = "batch.json";
+const numList = list => list.map(l => `№${l}`).join(", ");
 async function caseCommand(ids, mid) {
-  const take = ids.slice(0, 10), queued = [];
-  for (const lead of take) {
-    const d = await getJson(`drafts/${lead}.json`);
-    if (d && d.status === "draft" && Date.now() - Date.parse(d.created) < 10 * 60e3) continue; // только что собирали
-    await queue("build", lead);
-    queued.push(lead);
+  const b = await getJson(BATCH);
+  if (b?.list?.length) {
+    const add = ids.filter(l => !b.list.includes(l));
+    b.list.push(...add);
+    await putJson(BATCH, b);
+    return say(`➕ ${add.length ? `Добавил в очередь: ${numList(add)}.` : "Эти сделки уже в очереди."} Осталось ${b.list.length - b.done}, сейчас в работе №${b.current}.`, { reply: mid });
   }
-  const skipped = take.filter(l => !queued.includes(l));
-  await say([
-    queued.length ? `📥 Собираю ${queued.length > 1 ? "черновики" : "черновик"}: ${queued.map(l => `№${l}`).join(", ")} — пришлю в течение ${queued.length > 2 ? "5–10 минут" : "пары минут"}.` : "",
-    skipped.length ? `Черновик уже есть (собран меньше 10 минут назад): ${skipped.map(l => `№${l}`).join(", ")}.` : "",
-    ids.length > 10 ? `За раз — не больше 10 сделок, остальные пришлите следующим сообщением.` : ""
-  ].filter(Boolean).join("\n"), { reply: mid });
+  const list = ids.slice(0, 30);
+  await putJson(BATCH, { list, done: 0, current: list[0] });
+  await queue("build", list[0]);
+  await say(list.length > 1
+    ? `📥 Очередь: ${list.length} ${[2, 3, 4].includes(list.length % 10) && ![12, 13, 14].includes(list.length % 100) ? "сделки" : "сделок"} (${numList(list)}). Присылаю по одному: следующий — после «Опубликовать», «Отклонить» или «Ждать фото». Первый, №${list[0]}, — через 1–2 минуты.`
+    : `📥 Собираю черновик №${list[0]} — пришлю через 1–2 минуты.`, { reply: mid });
+}
+// С черновиком закончили — следующий из очереди (если эта сделка сейчас в работе)
+async function nextInBatch(lead) {
+  const b = await getJson(BATCH);
+  if (!b || b.current !== lead) return;
+  b.done++;
+  if (b.done >= b.list.length) {
+    await del(BATCH);
+    if (b.list.length > 1) await say(`🏁 Очередь кейсов пройдена: ${b.list.length}.`);
+    return;
+  }
+  b.current = b.list[b.done];
+  await putJson(BATCH, b);
+  await queue("build", b.current);
+}
+async function publishedCases() {
+  try { return JSON.parse(await ghFile("cases.json") || "[]"); }
+  catch (e) { console.warn(e.message); return []; }
 }
 
 async function onReply(msg) {
@@ -577,6 +639,7 @@ async function onReply(msg) {
   const text = String(msg.body?.text || "").trim();
   if (!text) return;
   if (!replyTo) {                                     // обычная переписка в группе — не наша, кроме команды «кейс N»
+    if (/^очередь\s+(сброс|стоп|отмена|очистить)/i.test(text)) { await del(BATCH); return say("Очередь кейсов очищена.", { reply: msg.body?.mid }); }
     const ids = parseCaseCommand(text);
     return ids ? caseCommand(ids, msg.body?.mid) : undefined;
   }
@@ -635,6 +698,7 @@ async function worker() {
       await say(`⚠️ Не получилось ${job.kind === "publish" ? "опубликовать" : "собрать"} кейс по сделке №${job.lead}: ${esc(e.message)}\n` +
         (job.kind === "publish" ? "Черновик на месте — можно нажать «Опубликовать» ещё раз." : "Можно нажать «Собрать заново» позже."),
         { lead: job.lead, buttons: [...(job.kind === "publish" ? [[btn("✅ Опубликовать ещё раз", `pub:${job.lead}`)]] : []), [btn("🔄 Собрать заново", `redo:${job.lead}`)]] }).catch(() => {});
+      if (job.kind === "build") await nextInBatch(job.lead).catch(() => {});   // черновик не собрался — не держим очередь
     }
   }
   // Раз в сутки: не появились ли фото у тех, кого ждём
