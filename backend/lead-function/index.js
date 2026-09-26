@@ -14,6 +14,10 @@
 //   AMO_PIPELINE     необязательно: название воронки (без него — главная воронка)
 //   AMO_STATUS       необязательно: название этапа, например «НОВЫЙ ЛИД» (без него — первый этап)
 //   AMO_PIPELINE_ID, AMO_STATUS_ID — то же числами, если названия не подходят
+//   AMO_JOBS_PIPELINE воронка для откликов на вакансии, например «Кандидаты» (без неё отклики — только в мессенджер)
+//
+// Виды заявок (поле kind): lead — клиент (по умолчанию); partner — клиент рекомендует знакомого (partner.html);
+// job — отклик на вакансию (jobs.html).
 //   ALLOWED_ORIGINS  адреса сайта через запятую; пусто — принимать откуда угодно
 
 const CHANNELS = { call: "позвонить", telegram: "написать в Telegram", max: "написать в MAX", whatsapp: "написать в WhatsApp" };
@@ -65,57 +69,51 @@ const amoApi = (path, body) => fetch(`https://${amoDomain()}${path}`, {
 
 // Воронка и этап по названию. Ищем один раз, пока функция «тёплая»; не нашли — пишем в лог варианты и ставим по умолчанию.
 const norm = s => String(s || "").toLowerCase().replace(/ё/g, "е").replace(/\s+/g, " ").trim();
-let stagePromise = null;
-function amoStage() {
-  if (env("AMO_PIPELINE_ID") || env("AMO_STATUS_ID") || !(env("AMO_PIPELINE") || env("AMO_STATUS")))
-    return Promise.resolve({ pipeline_id: Number(env("AMO_PIPELINE_ID")) || undefined, status_id: Number(env("AMO_STATUS_ID")) || undefined });
-  stagePromise ??= amoApi("/api/v4/leads/pipelines").then(data => {
+const stageCache = new Map();
+function findStage(pipelineName, statusName) {
+  const key = norm(pipelineName) + "|" + norm(statusName);
+  if (!stageCache.has(key)) stageCache.set(key, amoApi("/api/v4/leads/pipelines").then(data => {
     const pipelines = data?._embedded?.pipelines || [];
-    const want = norm(env("AMO_PIPELINE"));
+    const want = norm(pipelineName);
     const p = want ? pipelines.find(x => norm(x.name) === want) || pipelines.find(x => norm(x.name).includes(want))
                    : pipelines.find(x => x.is_main) || pipelines[0];
     if (!p) {
-      console.warn(`Воронка «${env("AMO_PIPELINE")}» не найдена. Есть: ${pipelines.map(x => x.name).join(" | ")}`);
+      console.warn(`Воронка «${pipelineName}» не найдена. Есть: ${pipelines.map(x => x.name).join(" | ")}`);
       return {};
     }
-    const statuses = p._embedded?.statuses || [], ws = norm(env("AMO_STATUS"));
-    const s = ws && (statuses.find(x => norm(x.name) === ws) || statuses.find(x => norm(x.name).includes(ws)));
-    if (ws && !s) console.warn(`Этап «${env("AMO_STATUS")}» в воронке «${p.name}» не найден. Есть: ${statuses.map(x => x.name).join(" | ")}`);
-    return { pipeline_id: p.id, status_id: s?.id };
-  }).catch(e => { stagePromise = null; throw e; });
-  return stagePromise;
+    const statuses = p._embedded?.statuses || [], ws = norm(statusName);
+    const st = ws && (statuses.find(x => norm(x.name) === ws) || statuses.find(x => norm(x.name).includes(ws)));
+    if (ws && !st) console.warn(`Этап «${statusName}» в воронке «${p.name}» не найден. Есть: ${statuses.map(x => x.name).join(" | ")}`);
+    return { pipeline_id: p.id, status_id: st?.id };
+  }).catch(e => { stageCache.delete(key); throw e; }));
+  return stageCache.get(key);
+}
+// Куда ставить клиентские заявки (и рекомендации): числа из настроек или поиск по названию
+function salesStage() {
+  if (env("AMO_PIPELINE_ID") || env("AMO_STATUS_ID") || !(env("AMO_PIPELINE") || env("AMO_STATUS")))
+    return Promise.resolve({ pipeline_id: Number(env("AMO_PIPELINE_ID")) || undefined, status_id: Number(env("AMO_STATUS_ID")) || undefined });
+  return findStage(env("AMO_PIPELINE"), env("AMO_STATUS"));
 }
 
-async function toAmo(lead) {
-  const api = amoApi;
-
+// Сделка с контактом, тегами и примечанием. deal: { name, tags, contact: {name, phone}, stage: Promise<{pipeline_id, status_id}>, note }
+async function toAmo(d) {
   const deal = {
-    name: `Заявка с сайта: ${lead.phone}`,
+    name: d.name,
     _embedded: {
-      tags: [{ name: "сайт" }],
+      tags: d.tags.map(name => ({ name })),
       contacts: [{
-        name: lead.name || `Клиент ${lead.phone}`,
-        custom_fields_values: [{ field_code: "PHONE", values: [{ value: lead.phone, enum_code: "WORK" }] }]
+        name: d.contact.name || `Клиент ${d.contact.phone}`,
+        custom_fields_values: [{ field_code: "PHONE", values: [{ value: d.contact.phone, enum_code: "WORK" }] }]
       }]
     }
   };
-  const { pipeline_id, status_id } = await amoStage().catch(e => { console.warn(`Этапы amoCRM не получены: ${e.message}`); return {}; });
+  const { pipeline_id, status_id } = await d.stage.catch(e => { console.warn(`Этапы amoCRM не получены: ${e.message}`); return {}; });
   if (pipeline_id) deal.pipeline_id = pipeline_id;
   if (status_id) deal.status_id = status_id;
 
-  const [created] = await api("/api/v4/leads/complex", [deal]);
+  const [created] = await amoApi("/api/v4/leads/complex", [deal]);
   const id = created?.id;
-  if (id) {
-    const ad = Object.entries(lead.ad).map(([k, v]) => `${k}=${v}`).join(", ");
-    const text = [
-      `Связаться: ${CHANNELS[lead.channel] || lead.channel}`,
-      `Откуда: ${SOURCES[lead.source] || lead.source}`,
-      lead.page && `Страница: ${lead.page}`,
-      ad && `Реклама: ${ad}`,
-      lead.ym_uid && `Яндекс Метрика ClientID: ${lead.ym_uid}`
-    ].filter(Boolean).join("\n");
-    await api(`/api/v4/leads/${id}/notes`, [{ note_type: "common", params: { text } }]).catch(() => {});
-  }
+  if (id && d.note) await amoApi(`/api/v4/leads/${id}/notes`, [{ note_type: "common", params: { text: d.note } }]).catch(() => {});
   return id;
 }
 
@@ -186,37 +184,80 @@ module.exports.handler = async event => {
   // Скрытое поле-ловушка: люди его не видят и не заполняют, спам-боты заполняют.
   if (data.website) return reply(200, headers, { ok: true });
 
+  const kind = ["partner", "job"].includes(data.kind) ? data.kind : "lead";
+  const isPhone = v => /^\+7\d{10}$/.test(v);
+  const phoneText = p => `+7 (${p.slice(2, 5)}) ${p.slice(5, 8)}-${p.slice(8, 10)}-${p.slice(10)}`;
   const lead = {
     phone: clip(data.phone, 20),
     name: clip(data.name, 80),
     channel: clip(data.channel, 20),
     source: clip(data.source, 30),
     page: clip(data.page, 200),
+    note: clip(data.note, 500),
+    case_ref: clip(data.case_ref, 120),
     ym_uid: /^\d{5,30}$/.test(String(data.ym_uid || "")) ? String(data.ym_uid) : "",
     ad: {}
   };
   // Рекламные метки: только известные ключи, коротко
   const AD_KEYS = ["utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term", "yclid"];
   if (data.ad && typeof data.ad === "object") AD_KEYS.forEach(k => { if (data.ad[k]) lead.ad[k] = clip(data.ad[k], 150); });
-  if (!/^\+7\d{10}$/.test(lead.phone)) return reply(400, headers, { ok: false, error: "phone" });
+  if (!isPhone(lead.phone)) return reply(400, headers, { ok: false, error: "phone" });
+  const partner = kind === "partner" ? { name: clip(data.partner?.name, 80), phone: clip(data.partner?.phone, 20) } : null;
+  if (partner && !isPhone(partner.phone)) return reply(400, headers, { ok: false, error: "partner_phone" });
+  const EXPERIENCE = { none: "без опыта", lt1: "до 1 года", "1to3": "1–3 года", gt3: "больше 3 лет" };
+  const job = kind === "job" ? { experience: EXPERIENCE[data.experience] || "не указан", car: data.car === true } : null;
+
+  const ad = Object.entries(lead.ad).map(([k, v]) => `${k}=${v}`).join(", ");
+  const tech = [lead.page && `Страница: ${lead.page}`, ad && `Реклама: ${ad}`, lead.ym_uid && `Яндекс Метрика ClientID: ${lead.ym_uid}`];
+  const TERMS = "Условия: партнёру 10 % от договора (не более 50 000 ₽) в течение 3 дней после аванса клиента; знакомому — регистратор ATIX AT-NVR-1109 (v2) в подарок.";
+
+  // Что и куда пишем в amoCRM
+  let deal = null;
+  if (kind === "lead") deal = {
+    name: `Заявка с сайта: ${lead.phone}`, tags: ["сайт"], contact: lead, stage: salesStage(),
+    note: [`Связаться: ${CHANNELS[lead.channel] || lead.channel}`, `Откуда: ${SOURCES[lead.source] || lead.source}`,
+           lead.case_ref && `Понравился кейс: ${lead.case_ref}`, ...tech].filter(Boolean).join("\n")
+  };
+  if (kind === "partner") deal = {
+    name: `Заявка на партнерство от клиента: ${lead.phone}`, tags: ["сайт", "партнёр"], contact: lead, stage: salesStage(),
+    note: [`Рекомендовал: ${partner.name || "имя не указано"}, ${partner.phone}`, lead.note && `Что нужно: ${lead.note}`,
+           "Знакомый знает, что его порекомендовали: да", TERMS, ...tech].filter(Boolean).join("\n")
+  };
+  if (kind === "job" && env("AMO_JOBS_PIPELINE")) deal = {
+    name: `Отклик на вакансию «Монтажник»: ${lead.name || lead.phone}`, tags: ["сайт", "вакансия"], contact: lead,
+    stage: findStage(env("AMO_JOBS_PIPELINE"), ""),
+    note: [`Опыт: ${job.experience}`, `Свой автомобиль: ${job.car ? "есть" : "нет"}`, lead.note && `О себе: ${lead.note}`, ...tech].filter(Boolean).join("\n")
+  };
+  if (kind === "job" && !env("AMO_JOBS_PIPELINE")) console.warn("AMO_JOBS_PIPELINE не задан — отклик только в мессенджер");
 
   let amoId = null, amoError = null;
-  if (env("AMO_DOMAIN") && env("AMO_TOKEN")) {
-    try { amoId = await toAmo(lead); } catch (e) { amoError = e.message; console.error(e); }
+  if (deal && env("AMO_DOMAIN") && env("AMO_TOKEN")) {
+    try { amoId = await toAmo(deal); } catch (e) { amoError = e.message; console.error(e); }
   }
 
-  const p = lead.phone;
-  const phoneText = `+7 (${p.slice(2, 5)}) ${p.slice(5, 8)}-${p.slice(8, 10)}-${p.slice(10)}`;
+  // Сообщение в мессенджер
   const amoLine = amoId
     ? `<a href="https://${esc(amoDomain())}/leads/detail/${amoId}">Сделка в amoCRM №${amoId}</a>`
     : amoError ? `⚠️ В amoCRM не записалось — внесите вручную` : null;
-  const lines = [`🔔 <b>Заявка с сайта</b>`, ``, `📞 ${phoneText}`];
-  if (lead.name) lines.push(`👤 ${esc(lead.name)}`);
-  lines.push(
-    `💬 ${esc(CHANNELS[lead.channel] || lead.channel || "—")}`,
-    `📍 ${esc(SOURCES[lead.source] || lead.source || "—")}`,
-    `🕒 ${samaraTime()} (Самара)`
-  );
+  let lines;
+  if (kind === "partner") {
+    lines = [`🤝 <b>Рекомендация от клиента</b>`, ``,
+      `👥 Знакомый: ${esc(lead.name || "имя не указано")}, ${phoneText(lead.phone)}`,
+      `🙋 Рекомендовал: ${esc(partner.name || "имя не указано")}, ${phoneText(partner.phone)}`];
+    if (lead.note) lines.push(`📝 ${esc(lead.note)}`);
+    lines.push(`💰 Партнёру 10 % (до 50 000 ₽) после аванса · знакомому — регистратор в подарок`);
+  } else if (kind === "job") {
+    lines = [`👷 <b>Отклик на вакансию «Монтажник»</b>`, ``, `📞 ${phoneText(lead.phone)}`];
+    if (lead.name) lines.push(`👤 ${esc(lead.name)}`);
+    lines.push(`🧰 Опыт: ${job.experience} · авто: ${job.car ? "есть" : "нет"}`);
+    if (lead.note) lines.push(`📝 ${esc(lead.note)}`);
+  } else {
+    lines = [`🔔 <b>Заявка с сайта</b>`, ``, `📞 ${phoneText(lead.phone)}`];
+    if (lead.name) lines.push(`👤 ${esc(lead.name)}`);
+    lines.push(`💬 ${esc(CHANNELS[lead.channel] || lead.channel || "—")}`, `📍 ${esc(SOURCES[lead.source] || lead.source || "—")}`);
+    if (lead.case_ref) lines.push(`💡 Понравился кейс: ${esc(lead.case_ref)}`);
+  }
+  lines.push(`🕒 ${samaraTime()} (Самара)`);
   const adShort = [lead.ad.utm_source, lead.ad.utm_campaign].filter(Boolean).join(" / ") || (lead.ad.yclid ? "Яндекс Директ" : "");
   if (adShort) lines.push(`🎯 Реклама: ${esc(adShort)}`);
   if (amoLine) lines.push(``, amoLine);

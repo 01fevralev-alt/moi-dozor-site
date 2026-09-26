@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Партнёрская программа — Мой Дозор</title>
+<meta name="description" content="Порекомендуйте нас знакомому — получите 10 % от договора, до 50 000 ₽. Знакомому — регистратор ATIX в подарок.">
+<link rel="icon" type="image/png" href="logo/dozor-favicon-256.png">
+<link rel="apple-touch-icon" href="logo/dozor-avatar-512.png">
+<meta name="theme-color" content="#0B0F14">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="pages.css">
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-logo" viewBox="0 0 120 120"><path d="M100 44 V88 A12 12 0 0 1 88 100 H32 A12 12 0 0 1 20 88 V32 A12 12 0 0 1 32 20 H76" fill="none" stroke="#FFFFFF" stroke-width="8"/><circle cx="92" cy="28" r="11" fill="#E08A1E"/></symbol>
+  <symbol id="i-phone" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/></symbol>
+  <symbol id="i-check" viewBox="0 0 20 20"><circle cx="10" cy="10" r="9" fill="currentColor" opacity=".16"/><path d="m6 10.2 2.6 2.6L14 7.4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-ok" viewBox="0 0 28 28"><circle cx="14" cy="14" r="13" fill="currentColor" opacity=".18"/><path d="m8.5 14.5 3.8 3.8 7.2-7.6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-gift" viewBox="0 0 20 20"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" d="M3 8h14v3H3zM4.5 11h11v6h-11zM10 8v9M10 8C8.5 5 5.5 4.5 5.5 6.5S9 8 10 8Zm0 0c1.5-3 4.5-3.5 4.5-1.5S11 8 10 8Z"/></symbol>
+</svg>
+<div class="grid-bg" aria-hidden="true"></div>
+
+<header class="top">
+  <div class="wrap">
+    <a href="./" class="logo" aria-label="Мой Дозор — на главную"><svg width="40" height="40"><use href="#i-logo"/></svg><span class="logo-name">Мой Дозор</span></a>
+    <div class="top-r">
+      <a href="./" class="top-back">← На главную</a>
+      <a class="top-phone" data-phone-link data-phone-text></a>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section class="hero">
+    <div class="wrap">
+      <div class="hero-grid">
+        <div>
+          <span class="chip"><svg width="16" height="16"><use href="#i-gift"/></svg>Партнёрская программа для наших клиентов</span>
+          <h1>Порекомендуйте нас — получите <em>10&nbsp;% от договора</em></h1>
+          <p class="lead">Знакомому нужно видеонаблюдение на склад, в магазин, офис или дом? Дайте его номер — остальное сделаем мы. Как только он внесёт аванс, переведём вам 10&nbsp;% от суммы договора.</p>
+          <div class="hero-cta">
+            <a href="#form" class="btn btn-accent">Рекомендовать знакомого</a>
+            <a href="#calc" class="btn btn-ghost">Сколько я получу?</a>
+          </div>
+        </div>
+        <aside class="gift card" aria-label="Подарок знакомому">
+          <p class="gift-k">ЗНАКОМОМУ — ПОДАРОК</p>
+          <h3>Регистратор ATIX <span style="white-space:nowrap">AT-NVR-1109 (v2)</span> на 9 камер</h3>
+          <p>Тот самый, который мы ставим своим клиентам. Рекомендовать не неловко: вы не зарабатываете на друге, а дарите ему подарок.</p>
+          <div class="gift-price"><s>7 250 ₽</s><b>0 ₽</b><span>в подарок</span></div>
+        </aside>
+      </div>
+
+      <div class="figs">
+        <div class="fig card"><b>10<small>%</small></b><span>от суммы договора</span></div>
+        <div class="fig card"><b>50<small>тыс. ₽</small></b><span>максимум за одного знакомого</span></div>
+        <div class="fig card"><b>3<small>дня</small></b><span>на выплату после аванса</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" aria-labelledby="h-how">
+    <div class="wrap">
+      <h2 id="h-how">Вам — один звонок другу. Остальное — наша работа</h2>
+      <ol class="steps">
+        <li class="step card"><b>Оставьте контакт</b><span>Имя и телефон знакомого. Предупредите его, что мы позвоним.</span></li>
+        <li class="step card"><b>Мы делаем всё сами</b><span>Звоним, приезжаем на объект, присылаем смету в 3 вариантах. Говорим, что от вас.</span></li>
+        <li class="step card"><b>Получаете 10&nbsp;%</b><span>Знакомый заключил договор и внёс аванс — в течение 3 дней переводим деньги вам.</span></li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="sec" id="calc" aria-labelledby="h-calc">
+    <div class="wrap">
+      <h2 id="h-calc">Сколько вы получите</h2>
+      <p class="sec-sub">Сдвиньте ползунок — сумма договора вашего знакомого.</p>
+      <div class="calc card">
+        <div class="calc-in">
+          <label for="calcRange">Договор знакомого</label>
+          <output class="calc-sum" id="calcSum" for="calcRange">50 000 ₽</output>
+          <input type="range" id="calcRange" min="20000" max="600000" step="5000" value="50000">
+          <div class="calc-scale" aria-hidden="true"><span>20 000 ₽</span><span>600 000 ₽</span></div>
+        </div>
+        <div class="calc-out">
+          <span>Ваше вознаграждение</span>
+          <b id="calcPay">5 000 ₽</b>
+          <small id="calcCap" hidden>Это максимум — 50 000 ₽ за одного знакомого.</small>
+          <small>+ регистратор за 7 250 ₽ — знакомому в подарок</small>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" aria-labelledby="h-why">
+    <div class="wrap">
+      <h2 id="h-why">Почему знакомому будет хорошо — и вам не неловко</h2>
+      <ul class="ticks">
+        <li><svg width="22" height="22"><use href="#i-check"/></svg>Смета в 3 вариантах за 15 минут — без навязывания</li>
+        <li><svg width="22" height="22"><use href="#i-check"/></svg>Договор, ЭДО, аванс — только после подписания</li>
+        <li><svg width="22" height="22"><use href="#i-check"/></svg>Гарантия 3 года на оборудование, 1 год на монтаж</li>
+        <li><svg width="22" height="22"><use href="#i-check"/></svg>Оборудование и монтаж — в одних руках</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="sec" aria-labelledby="h-rules">
+    <div class="wrap">
+      <h2 id="h-rules">Честные правила</h2>
+      <div class="faq">
+        <details><summary>Сколько знакомых можно рекомендовать?<i></i></summary><p>Сколько угодно. Выплата — за каждого, кто заключил договор и внёс аванс.</p></details>
+        <details><summary>Когда рекомендация засчитывается?<i></i></summary><p>Если знакомого ещё нет в нашей базе клиентов и он заключил договор в течение 90 дней после вашей рекомендации.</p></details>
+        <details><summary>Как вы платите?<i></i></summary><p>Переводом, в течение 3 дней после аванса знакомого. Как оформить выплату — договоримся: если вы самозанятый, достаточно чека.</p></details>
+        <details><summary>Кого можно рекомендовать?<i></i></summary><p>Любой объект: склад, магазин, офис, производство, автосервис, частный дом или дачу — в Самаре и области.</p></details>
+        <details><summary>Что, если знакомый откажется?<i></i></summary><p>Ничего страшного: мы не давим и не звоним по десять раз. Выплата — только если договор заключён и аванс внесён.</p></details>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="form" aria-labelledby="h-form">
+    <div class="wrap">
+      <div class="form-card card">
+        <div class="form-aside">
+          <h2 id="h-form">Рекомендовать знакомого</h2>
+          <p class="sec-sub">Позвоним ему в течение дня. О договоре и выплате сообщим вам.</p>
+          <ul>
+            <li><svg width="20" height="20"><use href="#i-check"/></svg>10&nbsp;% от договора, до 50 000 ₽</li>
+            <li><svg width="20" height="20"><use href="#i-check"/></svg>Выплата за 3 дня после аванса</li>
+            <li><svg width="20" height="20"><use href="#i-check"/></svg>Знакомому — регистратор в подарок</li>
+          </ul>
+        </div>
+        <form class="pform" data-kind="partner" novalidate
+              data-done-title="Спасибо! Рекомендация принята"
+              data-done-text="Позвоним знакомому в течение дня. Когда он заключит договор и внесёт аванс — сообщим вам и переведём 10 %.">
+          <fieldset>
+            <legend>ВЫ</legend>
+            <div class="field"><input name="my_name" type="text" autocomplete="name" placeholder="Ваше имя" aria-label="Ваше имя" class="ym-hide-content ym-disable-keys"></div>
+            <div class="field"><input name="my_phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="Ваш телефон" aria-label="Ваш телефон" data-phone data-phone-err="Введите ваш номер полностью: 10 цифр после +7" class="ym-hide-content ym-disable-keys"></div>
+          </fieldset>
+          <fieldset>
+            <legend>ЗНАКОМЫЙ</legend>
+            <div class="field"><input name="friend_name" type="text" autocomplete="off" placeholder="Имя знакомого" aria-label="Имя знакомого" class="ym-hide-content ym-disable-keys"></div>
+            <div class="field"><input name="friend_phone" type="tel" inputmode="tel" autocomplete="off" placeholder="Телефон знакомого" aria-label="Телефон знакомого" data-phone data-phone-err="Введите номер знакомого полностью: 10 цифр после +7" class="ym-hide-content ym-disable-keys"></div>
+          </fieldset>
+          <div class="field"><textarea name="note" rows="3" placeholder="Что нужно: объект, город, сколько камер — если знаете" aria-label="Что нужно знакомому" class="ym-hide-content ym-disable-keys"></textarea></div>
+          <label class="check"><input type="checkbox" name="friend_ok" data-required-check="Отметьте, что знакомый знает о рекомендации — без этого мы не можем ему позвонить">Знакомый знает, что я его рекомендую, и согласен на звонок</label>
+          <button class="btn btn-accent" type="submit">Отправить рекомендацию</button>
+          <p class="lf-err" role="alert"></p>
+          <p class="consent">Нажимая кнопку, вы даёте <a href="consent.html">согласие на обработку персональных данных</a> и соглашаетесь с <a href="policy.html">политикой</a>.</p>
+        </form>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <p>© <span data-year></span> Мой Дозор · ИП Февралев Илья Николаевич · ИНН 631553165932 · ОГРНИП 316631300090117</p>
+    <nav class="foot-links" aria-label="Ссылки">
+      <a href="./">Главная</a>
+      <a href="jobs.html">Работа у нас</a>
+      <a href="policy.html">Политика обработки персональных данных</a>
+    </nav>
+  </div>
+</footer>
+<script src="pages.js"></script>
+</body>
+</html>
