@@ -1,5 +1,7 @@
 /* Подстраницы (partner.html, jobs.html): Метрика, плашка cookie, маска телефона, отправка формы.
    Всё по образцу index.html; адрес функции и счётчик — те же. */
+// Корень сайта — от адреса этого скрипта: страницы лежат и в корне, и в cases/
+const BASE = new URL(".", document.currentScript.src).href;
 const SITE = {
   phone: "+79057239958",
   phoneText: "+7 (905) 723-99-58",
@@ -77,12 +79,12 @@ $$("[data-phone]").forEach(inp => {
   inp.addEventListener("blur", () => { if (!digitsOf(inp.value).length) inp.value = ""; });
 });
 
-/* ---------- Формы: data-kind="partner" | "job" ---------- */
+/* ---------- Формы: data-kind="lead" (страница кейса) | "partner" | "job" ---------- */
 // Поле-ловушка для спам-ботов: людям не видно, боты заполняют — такие заявки функция молча отбрасывает
 $$("form[data-kind]").forEach(f => f.insertAdjacentHTML("beforeend",
   '<input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0">'));
 
-const GOALS = { partner: "partner_lead", job: "job_apply" };
+const GOALS = { lead: "lead", partner: "partner_lead", job: "job_apply" };
 $$("form[data-kind]").forEach(form => {
   const err = form.querySelector(".lf-err"), btn = form.querySelector("[type=submit]"), kind = form.dataset.kind;
   let started = false;
@@ -104,9 +106,10 @@ $$("form[data-kind]").forEach(form => {
     if (must && !must.checked) { err.textContent = must.dataset.requiredCheck; must.focus(); return; }
 
     const phone = name => "+7" + digitsOf(v(name));
-    const payload = kind === "partner"
-      ? { kind, phone: phone("friend_phone"), name: v("friend_name"), note: v("note"), partner: { name: v("my_name"), phone: phone("my_phone") } }
-      : { kind, phone: phone("phone"), name: v("name"), note: v("note"), experience: v("experience"), car: !!form.elements.car?.checked };
+    const payload =
+      kind === "partner" ? { kind, phone: phone("friend_phone"), name: v("friend_name"), note: v("note"), partner: { name: v("my_name"), phone: phone("my_phone") } } :
+      kind === "job" ? { kind, phone: phone("phone"), name: v("name"), note: v("note"), experience: v("experience"), car: !!form.elements.car?.checked, selfemp: !!form.elements.selfemp?.checked } :
+      { kind, phone: phone("phone"), name: v("name"), channel: "call", source: form.dataset.source || "case_page", ...(form.dataset.case ? { case_ref: form.dataset.case } : {}) };
     if (form.elements.website?.value) payload.website = form.elements.website.value;
 
     btn.disabled = true;
@@ -117,7 +120,8 @@ $$("form[data-kind]").forEach(form => {
       err.textContent = `Не получилось отправить. Попробуйте ещё раз или позвоните: ${SITE.phoneText}`;
       return;
     }
-    goal(GOALS[kind]);
+    goal(GOALS[kind], kind === "lead" ? { form: payload.source, channel: "call" } : undefined);
+    if (kind === "lead") goal("lead_case");
     form.innerHTML = `<div class="done" role="status"><svg width="28" height="28"><use href="#i-ok"/></svg><div><b>${form.dataset.doneTitle}</b><p>${form.dataset.doneText}</p></div></div>`;
   });
 });
@@ -135,7 +139,7 @@ document.addEventListener("click", e => {
   try { ok = localStorage.getItem("dozor_cookie_ok") === "1"; } catch {}
   if (ok) return;
   document.body.insertAdjacentHTML("beforeend", `<div class="cookie" role="region" aria-label="Уведомление о cookie">
-    <p>Сайт использует cookie и Яндекс Метрику, чтобы работать удобнее. Подробнее — в <a href="policy.html#cookie">политике</a>.</p>
+    <p>Сайт использует cookie и Яндекс Метрику, чтобы работать удобнее. Подробнее — в <a href="${BASE}policy.html#cookie">политике</a>.</p>
     <button class="btn btn-accent" type="button">Понятно</button></div>`);
   const box = document.body.lastElementChild;
   box.querySelector("button").addEventListener("click", () => {

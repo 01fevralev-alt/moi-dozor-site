@@ -435,7 +435,6 @@ h3{font-weight:700;letter-spacing:-.025em;line-height:1.15}
 .case-big-nums b{display:block;font-size:clamp(28px,2.4vw,38px);font-weight:800;letter-spacing:-.03em;line-height:1}
 .case-big-nums span{display:block;margin-top:6px;font-size:13px;color:var(--muted)}
 .case-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:auto;padding-top:26px}
-.case-actions .btn-ghost{cursor:help}
 .tag-demo{position:absolute;left:14px;bottom:14px;display:inline-flex;align-items:center;height:28px;padding:0 12px;border-radius:999px;background:rgba(224,138,30,.18);border:1px solid rgba(224,138,30,.45);color:var(--accent-hi);font-size:12px;font-weight:700}
 
 /* cases gallery: big cards swipe like the strip below */
@@ -452,6 +451,10 @@ h3{font-weight:700;letter-spacing:-.025em;line-height:1.15}
 .cases-track>.case:hover{border-color:var(--line-2)}
 .cases-track>.case.is-active{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
 .cases-track>.case:focus-visible{outline:2px solid var(--accent-hi);outline-offset:2px}
+.cases-track .case-link{cursor:pointer}
+.cases-track .cl-now,.cases-track .case.is-active .cl-show{display:none}
+.cases-track .case.is-active .cl-now{display:inline;color:var(--muted)}
+.cases-track .case.is-active .case-link{border-bottom-color:transparent}
 
 /* cases slider */
 .slider-head{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:40px}
@@ -713,6 +716,7 @@ h3{font-weight:700;letter-spacing:-.025em;line-height:1.15}
   .cmp tbody th{width:auto;font-size:14px;color:var(--muted);margin-bottom:8px}
   .cmp td.us,.cmp tbody tr:last-child td.us{background:none;border-radius:0;box-shadow:none}
   .case-actions{flex-wrap:nowrap}
+  .lg-only{display:none}
   .case-actions .btn{flex:1 1 0;min-width:0;padding:0 12px;font-size:15px}
   .cases-track{grid-auto-columns:86%}
   .reels-track{grid-auto-columns:72%}
@@ -1388,10 +1392,11 @@ const SITE = {
   // КЕЙСЫ «Наши работы». Каждый объект — один раз: из этого собираются и большая карточка, и карточка в ленте.
   // [в квадратных скобках] — заглушка, на сайте подсвечивается. nums: камер, метров кабеля, дней монтажа (null — заглушка).
   // photo: путь к фото (пусто — рамка «Фото объекта появится…»); review: есть видеоотзыв; demo: пометка «Пример».
+  // url: страница кейса (cases/…html) — тогда на большой карточке появляется «Подробнее о проекте».
   cases: [
     { type: "Склад", addr: "Самара, ул. Промышленная, 10", title: "Найти, куда уходит товар между приёмкой и отгрузкой",
       done: ["Камеры над каждыми воротами и в зоне приёмки", "Обзор всех рядов стеллажей без слепых зон", "Архив на 30 дней и доступ с телефона для управляющего"],
-      nums: [16, 420, 3], photo: "", review: true, demo: true },
+      nums: [16, 420, 3], photo: "", review: true, demo: true, url: "cases/sklad-samara.html" },
     { type: "Автосервис", addr: "Самара, ул. [улица], [дом]", title: "Закрыть споры с клиентами о повреждениях после ремонта", done: [], nums: [null, null, null], photo: "" },
     { type: "Производство", addr: "Самарская обл., [город], ул. [улица]", title: "Контроль цеха и территории ночью и в выходные", done: [], nums: [null, null, null], photo: "", review: true },
     { type: "Магазин", addr: "Тольятти, ул. [улица], [дом]", title: "Понять, кто выносит товар: покупатели или персонал", done: [], nums: [null, null, null], photo: "" },
@@ -1800,7 +1805,7 @@ leadModal.addEventListener("close", () => document.body.classList.remove("modal-
         <div class="case-big-nums">${LABELS.map((l, k) => `<div><b>${num(c.nums?.[k])}</b><span>${l}</span></div>`).join("")}</div>
         <div class="case-actions">
           <a href="#final" class="btn btn-accent" data-modal="case" data-from="case" data-case="${esc(label(c))}">Хочу так же</a>
-          <span class="btn btn-ghost" title="Страница кейса появится, когда заполним кейс">Смотреть кейс</span>
+          ${c.url ? `<a class="btn btn-ghost" href="${esc(c.url)}">Подробнее<span class="lg-only"> о проекте</span> →</a>` : ""}
         </div>
       </div>
     </article>`).join("");
@@ -1812,7 +1817,7 @@ leadModal.addEventListener("close", () => document.body.classList.remove("modal-
         <p class="case-addr">${ph(c.addr)}</p>
         <h3 class="case-t">${ph(c.title)}</h3>
         <div class="case-nums">${LABELS.map((l, k) => `<div><b>${num(c.nums?.[k])}</b><span>${l}</span></div>`).join("")}</div>
-        <span class="case-link">Смотреть объект</span>
+        <span class="case-link" aria-hidden="true"><span class="cl-show">Показать ↑</span><span class="cl-now">Сейчас выше</span></span>
       </div>
     </article>`).join("");
 

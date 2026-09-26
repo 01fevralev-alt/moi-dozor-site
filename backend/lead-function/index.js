@@ -24,7 +24,7 @@ const CHANNELS = { call: "позвонить", telegram: "написать в Te
 const SOURCES = {
   hero: "форма на главном экране", tasks: "форма «Узнаёте?»", result: "форма «Что вы получите»", final: "форма внизу страницы",
   side: "кнопка в меню", mbar: "нижняя панель", status: "строка статуса", faq: "вопросы", case: "«Хочу так же» в кейсах",
-  engineer: "«Пригласить инженера»", tour: "«Записаться на экскурсию»", estimate: "смета", modal: "окно заявки"
+  engineer: "«Пригласить инженера»", case_page: "форма на странице кейса", tour: "«Записаться на экскурсию»", estimate: "смета", modal: "окно заявки"
 };
 
 const env = name => (process.env[name] || "").trim();
@@ -205,7 +205,7 @@ module.exports.handler = async event => {
   const partner = kind === "partner" ? { name: clip(data.partner?.name, 80), phone: clip(data.partner?.phone, 20) } : null;
   if (partner && !isPhone(partner.phone)) return reply(400, headers, { ok: false, error: "partner_phone" });
   const EXPERIENCE = { none: "без опыта", lt1: "до 1 года", "1to3": "1–3 года", gt3: "больше 3 лет" };
-  const job = kind === "job" ? { experience: EXPERIENCE[data.experience] || "не указан", car: data.car === true } : null;
+  const job = kind === "job" ? { experience: EXPERIENCE[data.experience] || "не указан", car: data.car === true, selfemp: data.selfemp === true } : null;
 
   const ad = Object.entries(lead.ad).map(([k, v]) => `${k}=${v}`).join(", ");
   const tech = [lead.page && `Страница: ${lead.page}`, ad && `Реклама: ${ad}`, lead.ym_uid && `Яндекс Метрика ClientID: ${lead.ym_uid}`];
@@ -226,7 +226,7 @@ module.exports.handler = async event => {
   if (kind === "job" && env("AMO_JOBS_PIPELINE")) deal = {
     name: `Отклик на вакансию «Монтажник»: ${lead.name || lead.phone}`, tags: ["сайт", "вакансия"], contact: lead,
     stage: findStage(env("AMO_JOBS_PIPELINE"), ""),
-    note: [`Опыт: ${job.experience}`, `Свой автомобиль: ${job.car ? "есть" : "нет"}`, lead.note && `О себе: ${lead.note}`, ...tech].filter(Boolean).join("\n")
+    note: [`Опыт: ${job.experience}`, `Свой автомобиль: ${job.car ? "есть" : "нет"}`, `Самозанятость или ИП: ${job.selfemp ? "есть / оформит" : "нет"}`, lead.note && `О себе: ${lead.note}`, ...tech].filter(Boolean).join("\n")
   };
   if (kind === "job" && !env("AMO_JOBS_PIPELINE")) console.warn("AMO_JOBS_PIPELINE не задан — отклик только в мессенджер");
 
@@ -249,7 +249,7 @@ module.exports.handler = async event => {
   } else if (kind === "job") {
     lines = [`👷 <b>Отклик на вакансию «Монтажник»</b>`, ``, `📞 ${phoneText(lead.phone)}`];
     if (lead.name) lines.push(`👤 ${esc(lead.name)}`);
-    lines.push(`🧰 Опыт: ${job.experience} · авто: ${job.car ? "есть" : "нет"}`);
+    lines.push(`🧰 Опыт: ${job.experience} · авто: ${job.car ? "есть" : "нет"} · самозанятость/ИП: ${job.selfemp ? "да" : "нет"}`);
     if (lead.note) lines.push(`📝 ${esc(lead.note)}`);
   } else {
     lines = [`🔔 <b>Заявка с сайта</b>`, ``, `📞 ${phoneText(lead.phone)}`];

@@ -1,0 +1,7 @@
+User-agent: *
+Disallow: /backend/
+Disallow: /tools/
+Disallow: /backup/
+Disallow: /video/
+
+Sitemap: https://xn--d1agelkcbq.xn--p1ai/sitemap.xml
