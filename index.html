@@ -8,6 +8,16 @@
 <link rel="icon" type="image/png" href="logo/dozor-favicon-256.png">
 <link rel="apple-touch-icon" href="logo/dozor-avatar-512.png">
 <meta name="theme-color" content="#0B0F14">
+<!-- Яндекс Метрика: Вебвизор, карта кликов, цели (reachGoal — в скрипте внизу, раздел «Metrika goals») -->
+<script>
+(function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
+m[i].l=1*new Date();
+for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
+k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})
+(window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym");
+ym(99939047, "init", { webvisor: true, clickmap: true, trackLinks: true, accurateTrackBounce: true });
+</script>
+<noscript><div><img src="https://mc.yandex.ru/watch/99939047" style="position:absolute;left:-9999px" alt=""></div></noscript>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Onest:wght@200;300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -230,6 +240,11 @@ h1{font-weight:700;font-size:clamp(34px,3.5vw,58px);line-height:1.02;letter-spac
 .modal-done{margin-top:22px}
 body.modal-open{overflow:hidden}
 @media (max-width:720px){.modal-in{padding:26px 20px 22px}}
+/* Cookie notice */
+.cookie{position:fixed;right:24px;bottom:24px;z-index:46;display:flex;align-items:center;gap:16px;max-width:460px;padding:14px 14px 14px 20px;
+  background:var(--surface-2);border:1px solid var(--line-2);border-radius:var(--r);box-shadow:0 18px 50px rgba(0,0,0,.5);font-size:14px;line-height:1.5;color:var(--soft)}
+.cookie a{color:var(--accent-hi)}
+.cookie .btn{height:44px;padding:0 20px;font-size:15px;flex:none}
 @media (prefers-reduced-motion:no-preference){.modal[open]{animation:fade .25s ease}}
 
 /* ---------- Trust figures: one glass strip resting on the hero edge ---------- */
@@ -617,6 +632,7 @@ h3{font-weight:700;letter-spacing:-.025em;line-height:1.15}
   .mbar .btn{flex:1;height:56px}
   .mbar .icon-btn{width:56px;height:56px;background:var(--surface-2);border-radius:var(--r);box-shadow:0 10px 30px rgba(0,0,0,.45)}
   .mbar.is-hidden{transform:translateY(160%);opacity:0;pointer-events:none}
+  .cookie{left:12px;right:12px;max-width:none;bottom:calc(max(12px,env(safe-area-inset-bottom)) + 68px)}
   .sec{scroll-margin-top:64px}
   .hero{min-height:0;display:block}
   .hero-grid{grid-template-columns:1fr;gap:0}
@@ -868,7 +884,7 @@ h3{font-weight:700;letter-spacing:-.025em;line-height:1.15}
             <div class="lf-row">
               <div class="field">
                 <label class="sr-only" for="phone-hero">Ваш телефон</label>
-                <input id="phone-hero" type="tel" inputmode="tel" autocomplete="tel" placeholder="+7 (___) ___-__-__" data-phone>
+                <input id="phone-hero" type="tel" inputmode="tel" autocomplete="tel" placeholder="+7 (___) ___-__-__" data-phone class="ym-hide-content ym-disable-keys">
               </div>
               <button class="btn btn-accent btn-glow" type="submit" data-label-call="Получить смету" data-label-msg="Жду сообщение">Получить смету</button>
             </div>
@@ -940,7 +956,7 @@ h3{font-weight:700;letter-spacing:-.025em;line-height:1.15}
           <div class="lf-row">
             <div class="field">
               <label class="sr-only" for="phone-tasks">Ваш телефон</label>
-              <input id="phone-tasks" type="tel" inputmode="tel" autocomplete="tel" placeholder="+7 (___) ___-__-__" data-phone>
+              <input id="phone-tasks" type="tel" inputmode="tel" autocomplete="tel" placeholder="+7 (___) ___-__-__" data-phone class="ym-hide-content ym-disable-keys">
             </div>
             <button class="btn btn-accent" type="submit">Подобрать систему</button>
           </div>
@@ -1026,7 +1042,7 @@ h3{font-weight:700;letter-spacing:-.025em;line-height:1.15}
           <div class="lf-row">
             <div class="field">
               <label class="sr-only" for="phone-app">Ваш телефон</label>
-              <input id="phone-app" type="tel" inputmode="tel" autocomplete="tel" placeholder="+7 (___) ___-__-__" data-phone>
+              <input id="phone-app" type="tel" inputmode="tel" autocomplete="tel" placeholder="+7 (___) ___-__-__" data-phone class="ym-hide-content ym-disable-keys">
             </div>
             <button class="btn btn-accent" type="submit">Хочу такую систему</button>
           </div>
@@ -1306,7 +1322,7 @@ h3{font-weight:700;letter-spacing:-.025em;line-height:1.15}
           <div class="lf-row">
             <div class="field">
               <label class="sr-only" for="phone-final">Ваш телефон</label>
-              <input id="phone-final" type="tel" inputmode="tel" autocomplete="tel" placeholder="+7 (___) ___-__-__" data-phone>
+              <input id="phone-final" type="tel" inputmode="tel" autocomplete="tel" placeholder="+7 (___) ___-__-__" data-phone class="ym-hide-content ym-disable-keys">
             </div>
             <button class="btn btn-accent" type="submit">Перезвоните мне</button>
           </div>
@@ -1355,6 +1371,10 @@ h3{font-weight:700;letter-spacing:-.025em;line-height:1.15}
     </div>
 </footer>
 </main>
+<div class="cookie" id="cookie" role="region" aria-label="Уведомление о cookie" hidden>
+  <p>Сайт использует cookie и Яндекс Метрику, чтобы работать удобнее. Подробнее — в <a href="policy.html#cookie">политике</a>.</p>
+  <button class="btn btn-accent" type="button" data-cookie-ok>Понятно</button>
+</div>
 
 <div class="mbar" id="mbar">
   <a class="icon-btn" data-phone-link aria-label="Позвонить"><svg width="22" height="22"><use href="#i-phone"/></svg></a>
@@ -1370,11 +1390,11 @@ h3{font-weight:700;letter-spacing:-.025em;line-height:1.15}
     <form class="lead-form" data-source="modal" novalidate>
       <div class="field">
         <label class="sr-only" for="name-modal">Ваше имя</label>
-        <input id="name-modal" type="text" autocomplete="name" placeholder="Имя" data-name>
+        <input id="name-modal" type="text" autocomplete="name" placeholder="Имя" data-name class="ym-hide-content ym-disable-keys">
       </div>
       <div class="field">
         <label class="sr-only" for="phone-modal">Ваш телефон</label>
-        <input id="phone-modal" type="tel" inputmode="tel" autocomplete="tel" placeholder="+7 (___) ___-__-__" data-phone>
+        <input id="phone-modal" type="tel" inputmode="tel" autocomplete="tel" placeholder="+7 (___) ___-__-__" data-phone class="ym-hide-content ym-disable-keys">
       </div>
       <div class="lf-err" role="alert"></div>
       <label class="switch"><input type="checkbox" data-msg-toggle><span class="track"></span>Не звоните — напишите в мессенджер</label>
@@ -1407,6 +1427,7 @@ const SITE = {
   hours: { from: 9, to: 20, days: [0,1,2,3,4,5,6] }, // по времени Самары, 0 = вс
   hoursLabel: "Ежедневно с 9:00 до 20:00",
   tzOffset: 4,                                  // Самара, UTC+4
+  metrika: 99939047,                            // счётчик Яндекс Метрики (код — в <head>)
   leadEndpoint: "https://functions.yandexcloud.net/d4eirdv1tglmcebcq8qj", // адрес функции в Яндекс Облаке (backend/lead-function); пусто — заявки только в консоль
   // CRM-OBJECTS:BEGIN — собирает tools/build_objects.py из выгрузки amoCRM (data/*.csv), руками не править.
   // ⚠ Камеры у 56 объектов — оценка, заменить точными. Москва, Санкт-Петербург, Уфа — тестовые адреса (demo), заменить реальными.
@@ -1513,7 +1534,29 @@ const SITE = {
 };
 
 /* Отправка заявки. Сюда подключить Telegram-бота / CRM / почту. */
+/* ---------- Metrika goals ---------- */
+function goal(name, params){
+  try { if (window.ym && SITE.metrika) ym(SITE.metrika, "reachGoal", name, params); } catch {}
+}
+// Рекламные метки первого захода: якоря и повторные заходы в той же вкладке их не теряют
+const AD_KEYS = ["utm_source","utm_medium","utm_campaign","utm_content","utm_term","yclid"];
+const adTags = (() => {
+  const q = new URLSearchParams(location.search), fresh = {};
+  AD_KEYS.forEach(k => { if (q.get(k)) fresh[k] = q.get(k).slice(0, 150); });
+  try {
+    if (Object.keys(fresh).length) sessionStorage.setItem("dozor_ad", JSON.stringify(fresh));
+    return JSON.parse(sessionStorage.getItem("dozor_ad") || "{}");
+  } catch { return fresh; }
+})();
+const metrikaClientId = () => new Promise(res => {
+  if (!window.ym || !SITE.metrika) return res("");
+  const t = setTimeout(() => res(""), 700);
+  try { ym(SITE.metrika, "getClientID", id => { clearTimeout(t); res(String(id || "")); }); } catch { clearTimeout(t); res(""); }
+});
+
 async function sendLead(lead){
+  const ym_uid = await metrikaClientId();
+  lead = { ...lead, ...(ym_uid ? { ym_uid } : {}), ...(Object.keys(adTags).length ? { ad: adTags } : {}) };
   if (!SITE.leadEndpoint) { console.info("Заявка:", lead); return true; }
   const ctrl = new AbortController(), timer = setTimeout(() => ctrl.abort(), 15000);
   try {
@@ -1702,11 +1745,16 @@ $$(".lead-form").forEach(form => form.addEventListener("submit", async e => {
   const btn = form.querySelector("[type=submit]"), trap = form.querySelector("[name=website]")?.value;
   btn.disabled = true;
   const sent = await sendLead({ ...(name ? { name } : {}), phone: "+7" + d, channel, source: form.dataset.source, page: location.pathname, ...(trap ? { website: trap } : {}) });
+  const LEAD_TYPE = { engineer: "engineer", tour: "tour", case: "case" };
+  const kind = form.closest("dialog") ? form.dataset.kind : "";
   if (!sent) {
+    goal("lead_error", { form: form.dataset.source });
     btn.disabled = false;
     form.querySelector(".lf-err").textContent = `Не получилось отправить. Попробуйте ещё раз или позвоните: ${SITE.phoneText}`;
     return;
   }
+  goal("lead", { form: form.dataset.source, channel });
+  goal("lead_" + (LEAD_TYPE[kind] || "estimate"));
   const box = form.closest("dialog")?.querySelector(".modal-done");
   if (!box) { form.innerHTML = doneHtml(channel, d, form.dataset.done); return; }
   box.innerHTML = doneHtml(channel, d, form.dataset.done);
@@ -1738,6 +1786,8 @@ function openLead(kind, from){
   btn.dataset.labelCall = c.button || "Получить смету";
   btn.textContent = btn.dataset.labelCall;
   modalForm.dataset.source = from || kind;
+  modalForm.dataset.kind = kind;
+  goal("modal_open", { kind, from: from || kind });
   modalForm.dataset.done = c.done || "";
   if (!leadModal.open) leadModal.showModal();
   document.body.classList.add("modal-open");
@@ -1903,6 +1953,78 @@ leadModal.addEventListener("close", () => document.body.classList.remove("modal-
     root.classList.add("cursor-on");
   }, { passive: true });
   root.addEventListener("mouseleave", () => root.classList.remove("cursor-on"));
+})();
+
+/* ---------- Metrika goals: actions on the page (each goal once per visit where it matters) ---------- */
+(() => {
+  const once = new Set();
+  const goalOnce = (name, params, key = name) => { if (once.has(key)) return; once.add(key); goal(name, params); };
+  const MESSENGERS = { "data-tg-link": "telegram", "data-max-link": "max", "data-wa-link": "whatsapp", "data-founder-link": "руководитель" };
+
+  document.addEventListener("click", e => {
+    const a = e.target.closest("a, button");
+    if (!a) return;
+    if (a.matches('a[href^="tel:"]')) return goal("call_click");
+    const m = Object.keys(MESSENGERS).find(attr => a.hasAttribute(attr));
+    if (m) return goal("messenger_click", { messenger: MESSENGERS[m] });
+    if (a.hasAttribute("data-tgch-link")) return goal("channel_click");
+    if (a.hasAttribute("data-yandex-link")) return goal("reviews_click");
+    if (a.matches(".reel-play")) return goal("video_play", { video: a.querySelector(".reel-cap b")?.textContent || "" });
+    if (a.matches("[data-slide]")) return goalOnce("cases_slide");
+  }, true);
+
+  // Начал вводить телефон — отдельно по каждой форме
+  document.addEventListener("input", e => {
+    if (!e.target.matches("[data-phone]")) return;
+    const f = e.target.form;
+    goalOnce("form_start", { form: f?.dataset.source || "" }, "form_start:" + (f?.dataset.source || ""));
+  }, true);
+
+  // Карта объектов: какие города смотрят
+  const cityGoal = e => {
+    const pin = e.target.closest?.("[data-obj]");
+    if (pin) goalOnce("map_city", { city: SITE.objects[pin.dataset.obj]?.city || pin.dataset.obj }, "map:" + pin.dataset.obj);
+  };
+  document.addEventListener("mouseover", cityGoal, { passive: true });
+  document.addEventListener("focusin", cityGoal);
+
+  // Вопросы: какой вопрос открыли
+  document.addEventListener("toggle", e => {
+    const d = e.target;
+    if (d.matches?.("#faq details") && d.open) goalOnce("faq_open", { q: d.querySelector("summary")?.textContent.trim() || "" }, "faq:" + d.querySelector("summary")?.textContent);
+  }, true);
+
+  // Слайдер «до/после»
+  document.getElementById("ba")?.addEventListener("pointerdown", () => goalOnce("ba_slider"), { passive: true });
+
+  // Досмотрел до ключевых блоков
+  const SEEN = { objects: "seen_cases", video: "seen_video", map: "seen_map", faq: "seen_faq", final: "seen_final" };
+  const io = new IntersectionObserver(es => es.forEach(en => {
+    if (!en.isIntersecting) return;
+    goalOnce(SEEN[en.target.id]);
+    io.unobserve(en.target);
+  }), { rootMargin: "0px 0px -50% 0px" }); // верх блока дошёл до середины экрана — работает и для блоков выше экрана
+  Object.keys(SEEN).forEach(id => { const el = document.getElementById(id); if (el) io.observe(el); });
+
+  // Вовлечённый посетитель: 60 секунд на открытой вкладке
+  let active = 0;
+  const timer = setInterval(() => {
+    if (document.visibilityState !== "visible") return;
+    if ((active += 5) >= 60) { goalOnce("engaged_60s"); clearInterval(timer); }
+  }, 5000);
+})();
+
+/* ---------- Cookie notice: shown until «Понятно»; Metrika works from the start (variant chosen by the owner) ---------- */
+(() => {
+  const box = document.getElementById("cookie");
+  let ok = false;
+  try { ok = localStorage.getItem("dozor_cookie_ok") === "1"; } catch {}
+  if (ok) return;
+  box.hidden = false;
+  box.querySelector("[data-cookie-ok]").addEventListener("click", () => {
+    try { localStorage.setItem("dozor_cookie_ok", "1"); } catch {}
+    box.hidden = true;
+  });
 })();
 </script>
 </body>

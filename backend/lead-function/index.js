@@ -106,8 +106,14 @@ async function toAmo(lead) {
   const [created] = await api("/api/v4/leads/complex", [deal]);
   const id = created?.id;
   if (id) {
-    const text = [`Связаться: ${CHANNELS[lead.channel] || lead.channel}`, `Откуда: ${SOURCES[lead.source] || lead.source}`, lead.page && `Страница: ${lead.page}`]
-      .filter(Boolean).join("\n");
+    const ad = Object.entries(lead.ad).map(([k, v]) => `${k}=${v}`).join(", ");
+    const text = [
+      `Связаться: ${CHANNELS[lead.channel] || lead.channel}`,
+      `Откуда: ${SOURCES[lead.source] || lead.source}`,
+      lead.page && `Страница: ${lead.page}`,
+      ad && `Реклама: ${ad}`,
+      lead.ym_uid && `Яндекс Метрика ClientID: ${lead.ym_uid}`
+    ].filter(Boolean).join("\n");
     await api(`/api/v4/leads/${id}/notes`, [{ note_type: "common", params: { text } }]).catch(() => {});
   }
   return id;
@@ -185,8 +191,13 @@ module.exports.handler = async event => {
     name: clip(data.name, 80),
     channel: clip(data.channel, 20),
     source: clip(data.source, 30),
-    page: clip(data.page, 200)
+    page: clip(data.page, 200),
+    ym_uid: /^\d{5,30}$/.test(String(data.ym_uid || "")) ? String(data.ym_uid) : "",
+    ad: {}
   };
+  // Рекламные метки: только известные ключи, коротко
+  const AD_KEYS = ["utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term", "yclid"];
+  if (data.ad && typeof data.ad === "object") AD_KEYS.forEach(k => { if (data.ad[k]) lead.ad[k] = clip(data.ad[k], 150); });
   if (!/^\+7\d{10}$/.test(lead.phone)) return reply(400, headers, { ok: false, error: "phone" });
 
   let amoId = null, amoError = null;
@@ -206,6 +217,8 @@ module.exports.handler = async event => {
     `📍 ${esc(SOURCES[lead.source] || lead.source || "—")}`,
     `🕒 ${samaraTime()} (Самара)`
   );
+  const adShort = [lead.ad.utm_source, lead.ad.utm_campaign].filter(Boolean).join(" / ") || (lead.ad.yclid ? "Яндекс Директ" : "");
+  if (adShort) lines.push(`🎯 Реклама: ${esc(adShort)}`);
   if (amoLine) lines.push(``, amoLine);
   const msg = lines.join("\n");
 
