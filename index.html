@@ -623,11 +623,11 @@ h3{font-weight:700;letter-spacing:-.025em;line-height:1.15}
   .mhead{display:flex;position:sticky;top:0;z-index:50;align-items:center;justify-content:space-between;gap:10px;height:64px;padding:0 16px;background:rgba(11,15,20,.82);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
   .mhead .logo-name{font-size:18px}
   .mhead-r{display:flex;gap:8px}
-  .burger span{display:block;width:18px;height:2px;background:currentColor;border-radius:2px;transition:transform .2s,opacity .2s}
-  .burger span+span{margin-top:4px}
-  body.menu-open .burger span:nth-child(1){transform:translateY(6px) rotate(45deg)}
-  body.menu-open .burger span:nth-child(2){opacity:0}
-  body.menu-open .burger span:nth-child(3){transform:translateY(-6px) rotate(-45deg)}
+  .burger>span{display:flex;flex-direction:column;gap:4px;width:18px}
+  .burger>span>span{display:block;height:2px;background:currentColor;border-radius:2px;transition:transform .2s,opacity .2s}
+  body.menu-open .burger>span>span:nth-child(1){transform:translateY(6px) rotate(45deg)}
+  body.menu-open .burger>span>span:nth-child(2){opacity:0}
+  body.menu-open .burger>span>span:nth-child(3){transform:translateY(-6px) rotate(-45deg)}
   .mbar{display:flex;position:fixed;left:12px;right:12px;bottom:max(12px,env(safe-area-inset-bottom));z-index:45;gap:8px;transition:transform .25s,opacity .25s}
   .mbar .btn{flex:1;height:56px}
   .mbar .icon-btn{width:56px;height:56px;background:var(--surface-2);border-radius:var(--r);box-shadow:0 10px 30px rgba(0,0,0,.45)}
@@ -694,13 +694,17 @@ h3{font-weight:700;letter-spacing:-.025em;line-height:1.15}
   .cmp tr{padding:18px 18px 16px;margin-bottom:10px;border-radius:18px;background:var(--surface);border:1px solid var(--line)}
   .cmp th,.cmp td{padding:0;border:0}
   .cmp tbody th{width:auto;font-size:14px;color:var(--muted);margin-bottom:8px}
-  .cmp td.us{background:none;border-radius:0;box-shadow:none}
+  .cmp td.us,.cmp tbody tr:last-child td.us{background:none;border-radius:0;box-shadow:none}
+  .case-actions{flex-wrap:nowrap}
+  .case-actions .btn{flex:1 1 0;min-width:0;padding:0 12px;font-size:15px}
   .cases-track{grid-auto-columns:86%}
   .reels-track{grid-auto-columns:72%}
-  .geo-stage{overflow-x:auto;scrollbar-width:none}
-  .geo-stage::-webkit-scrollbar{display:none}
-  .geo-plane{width:720px}
+  /* Вся карта на экране: плоскость шире блока, пустые края (до 8 % и после 84 %) уходят за край */
+  .geo-stage{overflow:hidden;padding-top:22px}
+  .geo-plane{width:131.6%;margin-left:-10.5%}
   .pin-up b{font-size:11px}
+  .pin-up i,.pin.big .pin-up i{height:var(--mbeam,calc(var(--beam,44px) * .7))}
+  .pin-up b{transform:translateX(var(--mlx,0))} /* сдвиг подписи вбок, чтобы не уходила за край и не ложилась на соседнюю точку */
   .case-hero-in{padding:24px 20px}
   .case-big-nums b{font-size:26px}
   .cmp td.them{margin-top:8px;padding-top:8px;border-top:1px dashed var(--line-2);font-size:14px}
@@ -1205,12 +1209,12 @@ h3{font-weight:700;letter-spacing:-.025em;line-height:1.15}
             </svg>
             <span class="pin-mini" style="--x:42.02%;--y:48.8%" aria-hidden="true"></span>
             <button class="pin big" style="--x:43.0%;--y:50.28%" data-obj="samara" aria-label="Самарская обл."><span class="pin-ring"></span><span class="pin-dot"></span><span class="pin-up"><b>Самарская обл.</b><i></i></span></button>
-            <button class="pin" style="--x:14.77%;--y:15.23%" data-obj="spb" aria-label="Санкт-Петербург"><span class="pin-ring"></span><span class="pin-dot"></span><span class="pin-up"><b>Санкт-Петербург</b><i></i></span></button>
+            <button class="pin" style="--x:14.77%;--y:15.23%;--mlx:34px" data-obj="spb" aria-label="Санкт-Петербург"><span class="pin-ring"></span><span class="pin-dot"></span><span class="pin-up"><b>Санкт-Петербург</b><i></i></span></button>
             <button class="pin" style="--x:25.17%;--y:37.7%;--beam:74px" data-obj="moscow" aria-label="Москва"><span class="pin-ring"></span><span class="pin-dot"></span><span class="pin-up"><b>Москва</b><i></i></span></button>
             <button class="pin" style="--x:29.15%;--y:35.8%;--beam:30px" data-obj="vladimir" aria-label="Владимир"><span class="pin-ring"></span><span class="pin-dot"></span><span class="pin-up"><b>Владимир</b><i></i></span></button>
-            <button class="pin" style="--x:51.39%;--y:42.8%" data-obj="ufa" aria-label="Уфа"><span class="pin-ring"></span><span class="pin-dot"></span><span class="pin-up"><b>Уфа</b><i></i></span></button>
-            <button class="pin" style="--x:35.02%;--y:70.67%" data-obj="volgograd" aria-label="Волгоград"><span class="pin-ring"></span><span class="pin-dot"></span><span class="pin-up"><b>Волгоград</b><i></i></span></button>
-            <button class="pin" style="--x:27.11%;--y:86.02%" data-obj="krasnodar" aria-label="Краснодар"><span class="pin-ring"></span><span class="pin-dot"></span><span class="pin-up"><b>Краснодар</b><i></i></span></button>
+            <button class="pin" style="--x:51.39%;--y:42.8%;--mbeam:58px" data-obj="ufa" aria-label="Уфа"><span class="pin-ring"></span><span class="pin-dot"></span><span class="pin-up"><b>Уфа</b><i></i></span></button>
+            <button class="pin" style="--x:35.02%;--y:70.67%;--mlx:-10px" data-obj="volgograd" aria-label="Волгоград"><span class="pin-ring"></span><span class="pin-dot"></span><span class="pin-up"><b>Волгоград</b><i></i></span></button>
+            <button class="pin" style="--x:27.11%;--y:86.02%;--mlx:-8px" data-obj="krasnodar" aria-label="Краснодар"><span class="pin-ring"></span><span class="pin-dot"></span><span class="pin-up"><b>Краснодар</b><i></i></span></button>
             <button class="pin" style="--x:76.17%;--y:41.55%" data-obj="omsk" aria-label="Омск"><span class="pin-ring"></span><span class="pin-dot"></span><span class="pin-up"><b>Омск</b><i></i></span></button>
             <div class="geo-tip" id="geoTip" role="region" hidden></div>
           </div>
@@ -1295,9 +1299,9 @@ h3{font-weight:700;letter-spacing:-.025em;line-height:1.15}
         <details><summary>Что нужно, чтобы получить смету?<i></i></summary><p>Адрес, пара фото или план помещения и что хотите видеть: ворота, склад, кассу. Смету в 3 вариантах пришлём за 15 минут.</p></details>
         <details><summary>В каких городах вы работаете?<i></i></summary><p>По всей России. В Самаре и области — своими монтажниками, в других городах — через партнёров, которые работают по нашим стандартам. Договор и гарантия — с нами.</p></details>
         <details><summary>Сколько времени занимает монтаж?<i></i></summary><p>Зависит от объекта. Точный срок пишем в смете и в договоре, после согласования начинаем монтаж без затяжек.</p></details>
-        <details><summary>Какая гарантия?<i></i></summary><p>3 года на оборудование. Если случай гарантийный, выезд и ремонт — за наш счёт.</p></details>
+        <details><summary>Какая гарантия?<i></i></summary><p>3 года на оборудование и 1 год на монтажные работы. Гарантию на работы можно продлить до 3 лет — дополнительной опцией в договоре. Если случай гарантийный, выезд и ремонт — за наш счёт.</p></details>
         <details><summary>Камеры уже стоят, но толку нет. Что делать?<i></i></summary><p>Пригласите инженера: он приедет, проверит систему и честно скажет, что можно доработать, а что проще заменить. Часть оборудования нередко удаётся оставить.</p></details>
-        <details><summary>Как проходит оплата?<i></i></summary><p>По договору, документы подписываем через ЭДО. После согласования сметы вносите аванс. Работаем без НДС. Кабель оплачивается по фактически проложенному метражу — не больше, чем ушло на ваш объект.</p></details>
+        <details><summary>Как проходит оплата?<i></i></summary><p>По договору, документы подписываем через ЭДО. Аванс — только после подписания договора. Работаем без НДС. Кабель оплачивается по фактически проложенному метражу — не больше, чем ушло на ваш объект.</p></details>
       </div>
     </div>
   </section>
