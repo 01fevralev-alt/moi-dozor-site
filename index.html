@@ -1407,6 +1407,7 @@ const SITE = {
   hours: { from: 9, to: 20, days: [0,1,2,3,4,5,6] }, // по времени Самары, 0 = вс
   hoursLabel: "Ежедневно с 9:00 до 20:00",
   tzOffset: 4,                                  // Самара, UTC+4
+  leadEndpoint: "",                             // адрес функции в Яндекс Облаке (backend/lead-function); пусто — заявки только в консоль
   // CRM-OBJECTS:BEGIN — собирает tools/build_objects.py из выгрузки amoCRM (data/*.csv), руками не править.
   // ⚠ Камеры у 56 объектов — оценка, заменить точными. Москва, Санкт-Петербург, Уфа — тестовые адреса (demo), заменить реальными.
   objects: {
@@ -1513,9 +1514,14 @@ const SITE = {
 
 /* Отправка заявки. Сюда подключить Telegram-бота / CRM / почту. */
 async function sendLead(lead){
-  // await fetch("/api/lead", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify(lead)});
-  console.info("Заявка:", lead);
-  return true;
+  if (!SITE.leadEndpoint) { console.info("Заявка:", lead); return true; }
+  const ctrl = new AbortController(), timer = setTimeout(() => ctrl.abort(), 15000);
+  try {
+    // text/plain — «простой» запрос без предварительной CORS-проверки; функция всё равно разбирает JSON
+    const r = await fetch(SITE.leadEndpoint, { method: "POST", headers: { "Content-Type": "text/plain" }, body: JSON.stringify(lead), signal: ctrl.signal });
+    return r.ok;
+  } catch { return false; }
+  finally { clearTimeout(timer); }
 }
 
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -1674,6 +1680,9 @@ $$("[data-msg-toggle]").forEach(t => t.addEventListener("change", () => {
 }));
 
 /* ---------- Submit ---------- */
+// Поле-ловушка для спам-ботов: людям не видно, боты заполняют — такие заявки функция молча отбрасывает
+$$(".lead-form").forEach(f => f.insertAdjacentHTML("beforeend",
+  '<input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0">'));
 const WHERE = { telegram: "в Telegram", max: "в MAX", whatsapp: "в WhatsApp" };
 const doneHtml = (channel, d, tail) => `<div class="done" role="status"><svg width="28" height="28"><use href="#i-ok"/></svg><div>
     <b>Заявка принята</b>
@@ -1690,8 +1699,14 @@ $$(".lead-form").forEach(form => form.addEventListener("submit", async e => {
   const msg = form.querySelector("[data-msg-toggle]")?.checked;
   const channel = msg ? form.querySelector(".channels input:checked").value : "call";
   const name = form.querySelector("[data-name]")?.value.trim();
-  form.querySelector("[type=submit]").disabled = true;
-  await sendLead({ ...(name ? { name } : {}), phone: "+7" + d, channel, source: form.dataset.source, page: location.pathname });
+  const btn = form.querySelector("[type=submit]"), trap = form.querySelector("[name=website]")?.value;
+  btn.disabled = true;
+  const sent = await sendLead({ ...(name ? { name } : {}), phone: "+7" + d, channel, source: form.dataset.source, page: location.pathname, ...(trap ? { website: trap } : {}) });
+  if (!sent) {
+    btn.disabled = false;
+    form.querySelector(".lf-err").textContent = `Не получилось отправить. Попробуйте ещё раз или позвоните: ${SITE.phoneText}`;
+    return;
+  }
   const box = form.closest("dialog")?.querySelector(".modal-done");
   if (!box) { form.innerHTML = doneHtml(channel, d, form.dataset.done); return; }
   box.innerHTML = doneHtml(channel, d, form.dataset.done);
