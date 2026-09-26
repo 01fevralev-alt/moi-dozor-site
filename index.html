@@ -438,6 +438,21 @@ h3{font-weight:700;letter-spacing:-.025em;line-height:1.15}
 .case-actions .btn-ghost{cursor:help}
 .tag-demo{position:absolute;left:14px;bottom:14px;display:inline-flex;align-items:center;height:28px;padding:0 12px;border-radius:999px;background:rgba(224,138,30,.18);border:1px solid rgba(224,138,30,.45);color:var(--accent-hi);font-size:12px;font-weight:700}
 
+/* cases gallery: big cards swipe like the strip below */
+.case-gallery{position:relative;margin-top:36px}
+.case-stage{display:grid;grid-auto-flow:column;grid-auto-columns:100%;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;overscroll-behavior-x:contain}
+.case-stage::-webkit-scrollbar{display:none}
+.case-stage>.case-hero{margin-top:0;scroll-snap-align:start}
+.case-ph img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.case-count{position:absolute;top:14px;right:42px;font-size:12px;font-weight:600;color:rgba(255,255,255,.7);letter-spacing:.04em}
+.case-arrow{position:absolute;top:196px;z-index:2;width:48px;height:48px;border-radius:14px;background:rgba(11,15,20,.72);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.case-arrow.prev{left:14px}
+.case-arrow.next{right:calc(47.6% + 14px)}
+.cases-track>.case{cursor:pointer;transition:border-color .15s,box-shadow .15s}
+.cases-track>.case:hover{border-color:var(--line-2)}
+.cases-track>.case.is-active{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.cases-track>.case:focus-visible{outline:2px solid var(--accent-hi);outline-offset:2px}
+
 /* cases slider */
 .slider-head{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:40px}
 .slider-head h3{font-size:22px}
@@ -606,6 +621,8 @@ h3{font-weight:700;letter-spacing:-.025em;line-height:1.15}
   .cases-track{grid-auto-columns:calc((100% - 14px)/2)}
   .case-hero{grid-template-columns:1fr}
   .case-hero .case-ph{min-height:300px}
+  .case-arrow{top:126px}
+  .case-arrow.next{right:14px}
   .cta,.noch-grid,.war-grid,.final-grid,.team-grid,.faq-grid{grid-template-columns:minmax(0,1fr)}
   .faq-grid h2{position:static}
   .steps{grid-template-columns:repeat(2,1fr)}
@@ -1064,84 +1081,21 @@ h3{font-weight:700;letter-spacing:-.025em;line-height:1.15}
       <h2 id="h-cases">Наши работы</h2>
       <p class="sec-sub">Задача клиента, схема камер и кадры днём и ночью — по каждому объекту отдельная страница.</p>
 
-      <article class="case-hero card">
-        <div class="case-ph"><span class="vf tl"></span><span class="vf tr"></span><span class="vf bl"></span><span class="vf br"></span><span class="case-cam">CAM 01</span><p><b>Фото объекта</b>появится после согласования с клиентом</p><span class="tag-demo">Пример</span><span class="case-rev"><i></i>Видеоотзыв</span></div>
-        <div class="case-hero-in">
-          <p class="case-type">Склад</p>
-          <p class="case-addr">Самара, ул. Промышленная, 10</p>
-          <h3>Найти, куда уходит товар между приёмкой и отгрузкой</h3>
-          <ul class="case-done">
-            <li><svg width="20" height="20"><use href="#i-check"/></svg>Камеры над каждыми воротами и в зоне приёмки</li>
-            <li><svg width="20" height="20"><use href="#i-check"/></svg>Обзор всех рядов стеллажей без слепых зон</li>
-            <li><svg width="20" height="20"><use href="#i-check"/></svg>Архив на 30 дней и доступ с телефона для управляющего</li>
-          </ul>
-          <div class="case-big-nums"><div><b>16</b><span>камер</span></div><div><b>420</b><span>м кабеля</span></div><div><b>3</b><span>дня монтажа</span></div></div>
-          <div class="case-actions">
-            <a href="#final" class="btn btn-accent" data-modal="case" data-from="case">Хочу так же</a>
-            <span class="btn btn-ghost" title="Страница кейса появится, когда заполним кейс">Смотреть кейс</span>
-          </div>
-        </div>
-      </article>
+      <!-- Кейсы заполняются из SITE.cases (скрипт «Cases gallery»): большие карточки листаются, лента под ними связана с ними -->
+      <div class="case-gallery">
+        <div class="case-stage" id="caseStage" aria-roledescription="карусель" aria-label="Наши работы"></div>
+        <button class="icon-btn case-arrow prev" type="button" data-cstep="-1" aria-label="Предыдущий объект"><svg width="20" height="20" style="transform:scaleX(-1)"><use href="#i-chev"/></svg></button>
+        <button class="icon-btn case-arrow next" type="button" data-cstep="1" aria-label="Следующий объект"><svg width="20" height="20"><use href="#i-chev"/></svg></button>
+      </div>
 
       <div class="slider-head">
-        <h3>Другие объекты</h3>
+        <h3>Все объекты</h3>
         <div class="slider-nav">
           <button class="icon-btn" type="button" data-slide="-1" aria-label="Предыдущие объекты"><svg width="20" height="20" style="transform:scaleX(-1)"><use href="#i-chev"/></svg></button>
           <button class="icon-btn" type="button" data-slide="1" aria-label="Следующие объекты"><svg width="20" height="20"><use href="#i-chev"/></svg></button>
         </div>
       </div>
-      <div class="cases-track" id="casesTrack">
-        <article class="case card">
-          <div class="case-ph"><span class="vf tl"></span><span class="vf tr"></span><span class="vf bl"></span><span class="vf br"></span><span class="case-cam">CAM 02</span><p><b>Фото объекта</b>появится после согласования с клиентом</p></div>
-          <div class="case-body">
-            <p class="case-type">Автосервис</p>
-            <p class="case-addr">Самара, ул. <span class="ph" title="Заглушка">[улица]</span>, <span class="ph" title="Заглушка">[дом]</span></p>
-            <h3 class="case-t">Закрыть споры с клиентами о повреждениях после ремонта</h3>
-            <div class="case-nums"><div><b><span class="ph">[N]</span></b><span>камер</span></div><div><b><span class="ph">[N]</span></b><span>м кабеля</span></div><div><b><span class="ph">[N]</span></b><span>дня монтаж</span></div></div>
-            <span class="case-link" title="Страница объекта появится, когда заполним кейс">Смотреть объект</span>
-          </div>
-        </article>
-        <article class="case card">
-          <div class="case-ph"><span class="vf tl"></span><span class="vf tr"></span><span class="vf bl"></span><span class="vf br"></span><span class="case-cam">CAM 03</span><p><b>Фото объекта</b>появится после согласования с клиентом</p><span class="case-rev"><i></i>Видеоотзыв</span></div>
-          <div class="case-body">
-            <p class="case-type">Производство</p>
-            <p class="case-addr">Самарская обл., <span class="ph" title="Заглушка">[город]</span>, ул. <span class="ph" title="Заглушка">[улица]</span></p>
-            <h3 class="case-t">Контроль цеха и территории ночью и в выходные</h3>
-            <div class="case-nums"><div><b><span class="ph">[N]</span></b><span>камер</span></div><div><b><span class="ph">[N]</span></b><span>м кабеля</span></div><div><b><span class="ph">[N]</span></b><span>дня монтаж</span></div></div>
-            <span class="case-link" title="Страница объекта появится, когда заполним кейс">Смотреть объект</span>
-          </div>
-        </article>
-        <article class="case card">
-          <div class="case-ph"><span class="vf tl"></span><span class="vf tr"></span><span class="vf bl"></span><span class="vf br"></span><span class="case-cam">CAM 04</span><p><b>Фото объекта</b>появится после согласования с клиентом</p></div>
-          <div class="case-body">
-            <p class="case-type">Магазин</p>
-            <p class="case-addr">Тольятти, ул. <span class="ph" title="Заглушка">[улица]</span>, <span class="ph" title="Заглушка">[дом]</span></p>
-            <h3 class="case-t">Понять, кто выносит товар: покупатели или персонал</h3>
-            <div class="case-nums"><div><b><span class="ph">[N]</span></b><span>камер</span></div><div><b><span class="ph">[N]</span></b><span>м кабеля</span></div><div><b><span class="ph">[N]</span></b><span>дня монтаж</span></div></div>
-            <span class="case-link" title="Страница объекта появится, когда заполним кейс">Смотреть объект</span>
-          </div>
-        </article>
-        <article class="case card">
-          <div class="case-ph"><span class="vf tl"></span><span class="vf tr"></span><span class="vf bl"></span><span class="vf br"></span><span class="case-cam">CAM 05</span><p><b>Фото объекта</b>появится после согласования с клиентом</p><span class="case-rev"><i></i>Видеоотзыв</span></div>
-          <div class="case-body">
-            <p class="case-type">Логистический комплекс</p>
-            <p class="case-addr">Краснодар, ул. <span class="ph" title="Заглушка">[улица]</span></p>
-            <h3 class="case-t">Контроль въезда и погрузки фур по номерам</h3>
-            <div class="case-nums"><div><b><span class="ph">[N]</span></b><span>камер</span></div><div><b><span class="ph">[N]</span></b><span>м кабеля</span></div><div><b><span class="ph">[N]</span></b><span>дня монтаж</span></div></div>
-            <span class="case-link" title="Страница объекта появится, когда заполним кейс">Смотреть объект</span>
-          </div>
-        </article>
-        <article class="case card">
-          <div class="case-ph"><span class="vf tl"></span><span class="vf tr"></span><span class="vf bl"></span><span class="vf br"></span><span class="case-cam">CAM 06</span><p><b>Фото объекта</b>появится после согласования с клиентом</p></div>
-          <div class="case-body">
-            <p class="case-type">Автостоянка</p>
-            <p class="case-addr">Волгоград, ул. <span class="ph" title="Заглушка">[улица]</span></p>
-            <h3 class="case-t">Видеть каждую машину на въезде и выезде, днём и ночью</h3>
-            <div class="case-nums"><div><b><span class="ph">[N]</span></b><span>камер</span></div><div><b><span class="ph">[N]</span></b><span>м кабеля</span></div><div><b><span class="ph">[N]</span></b><span>дня монтаж</span></div></div>
-            <span class="case-link" title="Страница объекта появится, когда заполним кейс">Смотреть объект</span>
-          </div>
-        </article>
-      </div>
+      <div class="cases-track" id="casesTrack"></div>
       <div class="slider-bar" aria-hidden="true"><i id="casesBar"></i></div>
       <p class="note">Стоимость не публикуем: у каждого объекта своя задача. Вашу посчитаем в смете.</p>
     </div>
@@ -1431,6 +1385,19 @@ const SITE = {
   hours: { from: 9, to: 20, days: [0,1,2,3,4,5,6] }, // по времени Самары, 0 = вс
   hoursLabel: "Ежедневно с 9:00 до 20:00",
   tzOffset: 4,                                  // Самара, UTC+4
+  // КЕЙСЫ «Наши работы». Каждый объект — один раз: из этого собираются и большая карточка, и карточка в ленте.
+  // [в квадратных скобках] — заглушка, на сайте подсвечивается. nums: камер, метров кабеля, дней монтажа (null — заглушка).
+  // photo: путь к фото (пусто — рамка «Фото объекта появится…»); review: есть видеоотзыв; demo: пометка «Пример».
+  cases: [
+    { type: "Склад", addr: "Самара, ул. Промышленная, 10", title: "Найти, куда уходит товар между приёмкой и отгрузкой",
+      done: ["Камеры над каждыми воротами и в зоне приёмки", "Обзор всех рядов стеллажей без слепых зон", "Архив на 30 дней и доступ с телефона для управляющего"],
+      nums: [16, 420, 3], photo: "", review: true, demo: true },
+    { type: "Автосервис", addr: "Самара, ул. [улица], [дом]", title: "Закрыть споры с клиентами о повреждениях после ремонта", done: [], nums: [null, null, null], photo: "" },
+    { type: "Производство", addr: "Самарская обл., [город], ул. [улица]", title: "Контроль цеха и территории ночью и в выходные", done: [], nums: [null, null, null], photo: "", review: true },
+    { type: "Магазин", addr: "Тольятти, ул. [улица], [дом]", title: "Понять, кто выносит товар: покупатели или персонал", done: [], nums: [null, null, null], photo: "" },
+    { type: "Логистический комплекс", addr: "Краснодар, ул. [улица]", title: "Контроль въезда и погрузки фур по номерам", done: [], nums: [null, null, null], photo: "", review: true },
+    { type: "Автостоянка", addr: "Волгоград, ул. [улица]", title: "Видеть каждую машину на въезде и выезде, днём и ночью", done: [], nums: [null, null, null], photo: "" }
+  ],
   metrika: 99939047,                            // счётчик Яндекс Метрики (код — в <head>)
   leadEndpoint: "https://functions.yandexcloud.net/d4eirdv1tglmcebcq8qj", // адрес функции в Яндекс Облаке (backend/lead-function); пусто — заявки только в консоль
   // CRM-OBJECTS:BEGIN — собирает tools/build_objects.py из выгрузки amoCRM (data/*.csv), руками не править.
@@ -1748,7 +1715,8 @@ $$(".lead-form").forEach(form => form.addEventListener("submit", async e => {
   const name = form.querySelector("[data-name]")?.value.trim();
   const btn = form.querySelector("[type=submit]"), trap = form.querySelector("[name=website]")?.value;
   btn.disabled = true;
-  const sent = await sendLead({ ...(name ? { name } : {}), phone: "+7" + d, channel, source: form.dataset.source, page: location.pathname, ...(trap ? { website: trap } : {}) });
+  const caseRef = form.closest("dialog") ? form.dataset.caseRef : "";
+  const sent = await sendLead({ ...(name ? { name } : {}), phone: "+7" + d, channel, source: form.dataset.source, page: location.pathname, ...(caseRef ? { case_ref: caseRef } : {}), ...(trap ? { website: trap } : {}) });
   const LEAD_TYPE = { engineer: "engineer", tour: "tour", case: "case" };
   const kind = form.closest("dialog") ? form.dataset.kind : "";
   if (!sent) {
@@ -1777,7 +1745,7 @@ const LEAD_MODAL = {
     button: "Записаться на экскурсию", done: "и договоримся о дне экскурсии." }
 };
 const leadModal = document.getElementById("leadModal"), modalForm = leadModal.querySelector(".lead-form");
-function openLead(kind, from){
+function openLead(kind, from, caseRef){
   const c = LEAD_MODAL[kind] || LEAD_MODAL.estimate, btn = modalForm.querySelector("[type=submit]");
   document.getElementById("leadModalTitle").textContent = c.title;
   document.getElementById("leadModalSub").textContent = c.sub;
@@ -1791,7 +1759,8 @@ function openLead(kind, from){
   btn.textContent = btn.dataset.labelCall;
   modalForm.dataset.source = from || kind;
   modalForm.dataset.kind = kind;
-  goal("modal_open", { kind, from: from || kind });
+  modalForm.dataset.caseRef = caseRef || "";
+  goal("modal_open", { kind, from: from || kind, ...(caseRef ? { case: caseRef } : {}) });
   modalForm.dataset.done = c.done || "";
   if (!leadModal.open) leadModal.showModal();
   document.body.classList.add("modal-open");
@@ -1801,29 +1770,102 @@ document.addEventListener("click", e => {
   const t = e.target.closest("[data-modal]");
   if (!t || typeof leadModal.showModal !== "function") return; // no <dialog> support: the link scrolls to a form as before
   e.preventDefault();
-  openLead(t.dataset.modal, t.dataset.from);
+  openLead(t.dataset.modal, t.dataset.from, t.dataset.case);
 });
 leadModal.addEventListener("click", e => { if (e.target === leadModal || e.target.closest("[data-close]")) leadModal.close(); });
 leadModal.addEventListener("close", () => document.body.classList.remove("modal-open"));
 
-/* ---------- Cases slider ---------- */
+/* ---------- Cases gallery: big cards and the strip, both swipe; the strip follows the big card ---------- */
 (() => {
-  const track = document.getElementById("casesTrack");
-  if (!track) return;
+  const stage = document.getElementById("caseStage"), track = document.getElementById("casesTrack");
+  if (!stage || !track || !SITE.cases?.length) return;
+  const esc = t => String(t ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const ph = t => esc(t).replace(/\[([^\]]+)\]/g, '<span class="ph" title="Заглушка">[$1]</span>');
+  const num = v => v === null || v === undefined || v === "" ? '<span class="ph">[N]</span>' : esc(v);
+  const LABELS = ["камер", "м кабеля", "дня монтажа"];
+  const n = SITE.cases.length, pad = i => String(i + 1).padStart(2, "0");
+  const photo = (c, i, big) => `<div class="case-ph"><span class="vf tl"></span><span class="vf tr"></span><span class="vf bl"></span><span class="vf br"></span>
+      ${c.photo ? `<img src="${esc(c.photo)}" alt="${esc(c.type)}" loading="lazy">` : `<p><b>Фото объекта</b>появится после согласования с клиентом</p>`}
+      <span class="case-cam">CAM ${pad(i)}</span>${big ? `<span class="case-count">${i + 1} / ${n}</span>` : ""}
+      ${big && c.demo ? '<span class="tag-demo">Пример</span>' : ""}${c.review ? '<span class="case-rev"><i></i>Видеоотзыв</span>' : ""}</div>`;
+  const label = c => `${c.type}, ${c.addr}`.replace(/\[[^\]]*\]/g, "").replace(/[, ]+$/, "").slice(0, 90);
+
+  stage.innerHTML = SITE.cases.map((c, i) => `<article class="case-hero card" aria-label="Объект ${i + 1} из ${n}">
+      ${photo(c, i, true)}
+      <div class="case-hero-in">
+        <p class="case-type">${ph(c.type)}</p>
+        <p class="case-addr">${ph(c.addr)}</p>
+        <h3>${ph(c.title)}</h3>
+        ${c.done?.length ? `<ul class="case-done">${c.done.map(d => `<li><svg width="20" height="20"><use href="#i-check"/></svg>${ph(d)}</li>`).join("")}</ul>` : ""}
+        <div class="case-big-nums">${LABELS.map((l, k) => `<div><b>${num(c.nums?.[k])}</b><span>${l}</span></div>`).join("")}</div>
+        <div class="case-actions">
+          <a href="#final" class="btn btn-accent" data-modal="case" data-from="case" data-case="${esc(label(c))}">Хочу так же</a>
+          <span class="btn btn-ghost" title="Страница кейса появится, когда заполним кейс">Смотреть кейс</span>
+        </div>
+      </div>
+    </article>`).join("");
+
+  track.innerHTML = SITE.cases.map((c, i) => `<article class="case card" tabindex="0" role="button" data-case-i="${i}" aria-label="Открыть: ${esc(label(c))}">
+      ${photo(c, i, false)}
+      <div class="case-body">
+        <p class="case-type">${ph(c.type)}</p>
+        <p class="case-addr">${ph(c.addr)}</p>
+        <h3 class="case-t">${ph(c.title)}</h3>
+        <div class="case-nums">${LABELS.map((l, k) => `<div><b>${num(c.nums?.[k])}</b><span>${l}</span></div>`).join("")}</div>
+        <span class="case-link">Смотреть объект</span>
+      </div>
+    </article>`).join("");
+
+  const smooth = reduced ? "auto" : "smooth";
+  const cards = [...track.children];
+  const stageStep = () => stage.clientWidth + 14;
+  const cur = () => Math.max(0, Math.min(n - 1, Math.round(stage.scrollLeft / stageStep())));
+  const go = i => stage.scrollTo({ left: Math.max(0, Math.min(n - 1, i)) * stageStep(), behavior: smooth });
+
+  // Лента: стрелки и полоса прогресса
   const prev = document.querySelector("[data-slide='-1']"), next = document.querySelector("[data-slide='1']"), bar = document.getElementById("casesBar");
-  const step = () => { const c = track.querySelector(".case"); return c ? c.getBoundingClientRect().width + 14 : track.clientWidth; };
-  const update = () => {
+  const stripStep = () => (cards[0]?.getBoundingClientRect().width || track.clientWidth) + 14;
+  const updateStrip = () => {
     const max = track.scrollWidth - track.clientWidth, vis = track.clientWidth / track.scrollWidth;
     prev.disabled = track.scrollLeft <= 2;
     next.disabled = track.scrollLeft >= max - 2;
     bar.style.width = Math.min(100, vis * 100) + "%";
     bar.style.transform = `translateX(${max > 0 ? (track.scrollLeft / max) * (1 / vis - 1) * 100 : 0}%)`;
   };
-  prev.addEventListener("click", () => track.scrollBy({ left: -step(), behavior: reduced ? "auto" : "smooth" }));
-  next.addEventListener("click", () => track.scrollBy({ left: step(), behavior: reduced ? "auto" : "smooth" }));
-  track.addEventListener("scroll", update, { passive: true });
-  addEventListener("resize", update);
-  update();
+  prev.addEventListener("click", () => track.scrollBy({ left: -stripStep(), behavior: smooth }));
+  next.addEventListener("click", () => track.scrollBy({ left: stripStep(), behavior: smooth }));
+  track.addEventListener("scroll", updateStrip, { passive: true });
+
+  // Большая карточка: стрелки, подсветка в ленте, лента доезжает до текущей
+  const aPrev = document.querySelector("[data-cstep='-1']"), aNext = document.querySelector("[data-cstep='1']");
+  aPrev.addEventListener("click", () => go(cur() - 1));
+  aNext.addEventListener("click", () => go(cur() + 1));
+  let shown = -1;
+  const sync = () => {
+    const i = cur();
+    if (shown !== -1 && i !== shown) goal("cases_slide");
+    aPrev.disabled = i === 0;
+    aNext.disabled = i === n - 1;
+    if (i === shown) return;
+    shown = i;
+    cards.forEach((c, k) => { c.classList.toggle("is-active", k === i); c.setAttribute("aria-current", k === i ? "true" : "false"); });
+    const c = cards[i], tl = track.scrollLeft, l = c.offsetLeft - track.offsetLeft;
+    if (l < tl || l + c.offsetWidth > tl + track.clientWidth) track.scrollTo({ left: l, behavior: smooth });
+  };
+  stage.addEventListener("scroll", () => requestAnimationFrame(sync), { passive: true });
+
+  // Тап по карточке в ленте — она открывается большой
+  const open = card => {
+    go(+card.dataset.caseI);
+    const top = stage.getBoundingClientRect().top;
+    if (top < 0 || top > innerHeight * .5) stage.scrollIntoView({ behavior: smooth, block: "start" });
+  };
+  track.addEventListener("click", e => { const c = e.target.closest("[data-case-i]"); if (c) open(c); });
+  track.addEventListener("keydown", e => { const c = e.target.closest("[data-case-i]"); if (c && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); open(c); } });
+
+  addEventListener("resize", () => { go(shown < 0 ? 0 : shown); updateStrip(); });
+  updateStrip();
+  sync();
 })();
 
 /* ---------- Reels: play on click, one at a time, pause off-screen; arrows ---------- */
