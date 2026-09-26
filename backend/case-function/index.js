@@ -22,7 +22,9 @@
 //   SELF_URL          необязательно: адрес этой функции, если определился неверно
 // У функции должен быть сервисный аккаунт с ролями ai.languageModels.user и storage.editor.
 
-const sharp = require("sharp");
+// sharp (сжатие фото) грузим только когда нужен: если он не встал, остальное — проверка, кнопки, правки — работает
+let sharpLib = null;
+const loadSharp = () => sharpLib || (sharpLib = require("sharp"));
 const crypto = require("crypto");
 const { renderCase, addToSitemap } = require("./render.js");
 
@@ -145,7 +147,7 @@ async function listPhotos(folder) {
 
 // Фото для сайта: 1600 px по длинной стороне, webp. Превью для MAX: 640 px с крупным номером в углу.
 async function processPhoto(buf, n) {
-  const img = sharp(buf, { failOn: "none" }).rotate();
+  const img = loadSharp()(buf, { failOn: "none" }).rotate();
   const site = await img.clone().resize({ width: 1600, height: 1600, fit: "inside", withoutEnlargement: true }).webp({ quality: 80 }).toBuffer();
   const badge = Buffer.from(`<svg width="84" height="84" xmlns="http://www.w3.org/2000/svg"><circle cx="42" cy="42" r="36" fill="#E08A1E"/><text x="42" y="56" font-family="sans-serif" font-size="40" font-weight="700" fill="#fff" text-anchor="middle">${n}</text></svg>`);
   const preview = await img.clone().resize({ width: 640, height: 640, fit: "inside" }).composite([{ input: badge, top: 12, left: 12 }]).jpeg({ quality: 78 }).toBuffer();
@@ -506,6 +508,7 @@ async function setup(selfUrl) {
   const amoHook = `${selfUrl}?src=amo&s=${s}`, maxHook = `${selfUrl}?src=max&s=${s}`;
   const check = async (name, fn) => { try { return `✅ ${name}${(await fn()) || ""}`; } catch (e) { return `❌ ${name}: ${e.message}`; } };
   const lines = await Promise.all([
+    check("Сжатие фото (sharp)", async () => { loadSharp(); }),
     check("Бакет", async () => { await putJson("setup-check.json", { t: Date.now() }); await del("setup-check.json"); }),
     check("YandexGPT", async () => { await gpt('Ответь JSON {"ok":true}'); }),
     check("amoCRM", async () => ` — ${(await amo("/api/v4/account")).name}`),
