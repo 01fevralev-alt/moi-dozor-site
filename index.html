@@ -421,6 +421,8 @@ h3{font-weight:700;letter-spacing:-.025em;line-height:1.15}
 .gt-t{font-size:14px;font-weight:600}
 .gt-c{font-size:13px;font-weight:600;color:var(--accent-hi);white-space:nowrap}
 .gt-a{grid-column:1/-1;margin-top:1px;font-size:13px;color:var(--muted)}
+.gt-case{color:var(--accent-hi);font-weight:600;white-space:nowrap}
+.gt-case:hover{text-decoration:underline}
 
 /* featured case */
 .case-hero{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);overflow:hidden;margin-top:36px}
@@ -1800,10 +1802,10 @@ function swipe(el, step){
 // Настоящие кейсы лежат в cases.json (их публикует бот по сделкам из amoCRM, новые первыми).
 // На главной — только кейсы с фото, сначала объекты с большим числом камер (при равенстве — новее выше).
 // Пока таких меньше трёх, после них идут примеры из SITE.cases.
+// Один запрос на страницу: кейсы нужны и галерее, и карте объектов
+const CASES_JSON = fetch("cases.json", { cache: "no-cache" }).then(r => r.ok ? r.json() : []).then(d => Array.isArray(d) ? d : []).catch(() => []);
 async function loadCases(){
-  let real = [];
-  try { const r = await fetch("cases.json", { cache: "no-cache" }); if (r.ok) real = await r.json(); } catch {}
-  real = (Array.isArray(real) ? real : []).filter(c => c.photos?.length).map(c => ({ ...c, photo: c.photos[0] }))
+  const real = (await CASES_JSON).filter(c => c.photos?.length).map(c => ({ ...c, photo: c.photos[0] }))
     .sort((a, b) => (b.nums?.[0] || 0) - (a.nums?.[0] || 0) || String(b.date).localeCompare(String(a.date)));
   return real.length >= 3 ? real : [...real, ...SITE.cases];
 }
@@ -2001,6 +2003,33 @@ async function loadCases(){
     tip.style.left = left + "px";
     tip.style.top = top + "px";
   };
+  // Опубликованные кейсы — в плашку своего города: у знакомого адреса появляется «Кейс →», новый объект добавляется строкой.
+  // Город без точки на карте пропускаем: координаты точки рисуются вручную.
+  const norm = t => String(t || "").toLowerCase().replace(/ё/g, "е").replace(/\s+/g, " ").trim();
+  const SAMARA_TOWNS = /^(самара|тольятти|сызрань|новокуйбышевск|чапаевск|жигулевск|кинель|отрадный|похвистнево|октябрьск|нефтегорск|безенчук)$/;
+  const regionOf = c => {
+    const city = norm(c.city);
+    const key = Object.keys(SITE.objects).find(k => k !== "samara" && norm(SITE.objects[k].city) === city);
+    if (key) return key;
+    const places = new Set((SITE.objects.samara?.items || []).map(([, a]) => norm(a.split(",")[0])));
+    return SAMARA_TOWNS.test(city) || places.has(city) || /самарск/i.test(c.addr) ? "samara" : null;
+  };
+  const mergeCases = cases => {
+    for (const c of cases) {
+      const o = SITE.objects[regionOf(c)];
+      if (!o || !c.url) continue;
+      o.items = o.items || [];
+      const addr = norm(c.addr), parts = addr.split(",").map(x => x.trim());
+      const house = parts.length > 2 && /^\d/.test(parts[parts.length - 1]);            // «Самара, ул. Береговая, 7»
+      const street = parts.slice(1, house ? -1 : undefined).join(", ");                  // «ул. береговая» / «пер. карьерный 3-й»
+      const tail = parts.slice(1).join(", ");                                             // адрес без города: в других городах он так и записан
+      const same = o.items.find(it => house ? norm(it[1]).endsWith(tail) : street && norm(it[1]).includes(street));
+      if (same) same[3] = c.url;
+      else o.items.unshift([c.type, c.addr, c.nums?.[0] || null, c.url]);
+    }
+    cur = null;                                                                           // открытую плашку перерисовать
+  };
+  CASES_JSON.then(mergeCases);
   const show = pin => {
     const o = SITE.objects[pin.dataset.obj];
     if (!o) return;
@@ -2009,8 +2038,8 @@ async function loadCases(){
       tip.innerHTML =
         `<div class="gt-head"><b>${esc(o.city)}</b>${items.length ? `<span class="gt-n">${plural(items.length, ["объект", "объекта", "объектов"])}</span>` : ""}</div>` +
         (o.note || o.demo ? `<p class="gt-sub">${o.demo ? `<span class="gt-demo">Пример</span>` : ""}${esc(o.note || "")}</p>` : "") +
-        (items.length ? `<ul class="gt-list" tabindex="0">${items.map(([t, a, c]) =>
-          `<li><span class="gt-t">${esc(t)}</span>${c ? `<span class="gt-c">${plural(c, ["камера", "камеры", "камер"])}</span>` : ""}<span class="gt-a">${esc(a)}</span></li>`).join("")}</ul>` : "");
+        (items.length ? `<ul class="gt-list" tabindex="0">${items.map(([t, a, c, url]) =>
+          `<li><span class="gt-t">${esc(t)}</span>${c ? `<span class="gt-c">${plural(c, ["камера", "камеры", "камер"])}</span>` : ""}<span class="gt-a">${esc(a)}${url ? ` · <a class="gt-case" href="${esc(url)}">Кейс →</a>` : ""}</span></li>`).join("")}</ul>` : "");
       tip.setAttribute("aria-label", "Объекты: " + o.city);
       cur = pin;
     }
