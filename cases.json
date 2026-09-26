@@ -1,5 +1,76 @@
 [
   {
+    "slug": "chastnyy-dom-samarskaya-oblast-2",
+    "date": "2026-09-27",
+    "type": "Частный дом",
+    "city": "Самарская область",
+    "addr": "г. Самара, тер. Горелый Хутор",
+    "title": "Видеть, что происходит на участке, пока хозяев нет",
+    "lead": "Подключили три уличные камеры к существующей системе и настроили просмотр с телефона. Теперь хозяева могут следить за участком, даже когда их нет дома.",
+    "task": [
+      "Хозяйству нужен был контроль над территорией, чтобы всегда быть в курсе событий."
+    ],
+    "done": [
+      "Подключили 3 уличные камеры к существующей системе",
+      "Настроили просмотр живого видео и архива с телефона"
+    ],
+    "result": [
+      "Участок видно с телефона из любого места",
+      "Если что-то случится, запись поможет разобраться"
+    ],
+    "nums": [
+      3,
+      53,
+      1
+    ],
+    "works": [
+      "Осмотр",
+      "Монтаж 3 уличных камер",
+      "Протяжка UTP-провода 53 м",
+      "Монтаж",
+      "Монтаж коммутатора",
+      "Монтаж регистратора",
+      "Настройка и подключение 8 камер",
+      "Настройка регистратора",
+      "Настройка роутера",
+      "Монтаж домофона",
+      "Настройка домофона",
+      "Восстановление и подборка паролей от камер, домофона и вызывной панели",
+      "Предоставление доступа клиенту на 2 телефона"
+    ],
+    "timeline": [
+      {
+        "date": "30.04.2026",
+        "title": "Осмотр",
+        "text": "Осмотрели объект и подготовили смету"
+      },
+      {
+        "date": "08.06.2026",
+        "title": "Монтаж",
+        "text": "Установили 3 камеры, 1 день работ"
+      },
+      {
+        "date": "08.06.2026",
+        "title": "Сдача",
+        "text": "Настроили доступ с телефона и сдали объект"
+      }
+    ],
+    "photos": [
+      "assets/cases/chastnyy-dom-samarskaya-oblast-2/01-ba7791.webp",
+      "assets/cases/chastnyy-dom-samarskaya-oblast-2/02-bbd689.webp",
+      "assets/cases/chastnyy-dom-samarskaya-oblast-2/03-cab322.webp",
+      "assets/cases/chastnyy-dom-samarskaya-oblast-2/04-90df7a.webp",
+      "assets/cases/chastnyy-dom-samarskaya-oblast-2/05-b3228b.webp",
+      "assets/cases/chastnyy-dom-samarskaya-oblast-2/06-0f8f86.webp",
+      "assets/cases/chastnyy-dom-samarskaya-oblast-2/07-6a43c2.webp",
+      "assets/cases/chastnyy-dom-samarskaya-oblast-2/08-eaba02.webp",
+      "assets/cases/chastnyy-dom-samarskaya-oblast-2/09-795eaf.webp",
+      "assets/cases/chastnyy-dom-samarskaya-oblast-2/10-81b969.webp",
+      "assets/cases/chastnyy-dom-samarskaya-oblast-2/11-6b4b60.webp"
+    ],
+    "url": "cases/chastnyy-dom-samarskaya-oblast-2.html"
+  },
+  {
     "slug": "chastnyy-dom-samarskaya-oblast",
     "date": "2026-09-27",
     "type": "Частный дом",
@@ -128,78 +199,6 @@
       "assets/cases/avtoservis-samarskaya-oblast/10-68cff6.webp"
     ],
     "url": "cases/avtoservis-samarskaya-oblast.html"
-  },
-  {
-    "slug": "chastnyy-dom-samarskaya-oblast-2",
-    "date": "2026-09-26",
-    "type": "Частный дом",
-    "city": "Самарская область",
-    "addr": "г. Самара, тер. Горелый Хутор",
-    "title": "Добавить камеры к существующей системе",
-    "lead": "Добавили три уличные камеры и настроили просмотр с телефона. Теперь хозяин всегда в курсе, что происходит на прилегающей территории.",
-    "task": [
-      "Хозяину частного дома нужно было контролировать участок, пока его нет рядом.",
-      "Важно было аккуратно разместить камеры и настроить систему так, чтобы можно было следить за территорией удалённо."
-    ],
-    "done": [
-      "Поставили 3 уличные камеры",
-      "Собрали систему записи — регистратор и коммутатор",
-      "Настроили просмотр живого видео с телефона"
-    ],
-    "result": [
-      "Хозяин видит, что происходит на участке, даже когда его нет рядом"
-    ],
-    "nums": [
-      3,
-      53,
-      11
-    ],
-    "works": [
-      "Осмотр",
-      "Монтаж 3 уличных камер",
-      "Протяжка UTP-провода 53 м",
-      "Монтаж",
-      "Монтаж коммутатора",
-      "Монтаж регистратора",
-      "Настройка и подключение 8 камер",
-      "Настройка регистратора",
-      "Настройка роутера",
-      "Монтаж домофона",
-      "Настройка домофона",
-      "Восстановление и подборка паролей от камер, домофона и вызывной панели",
-      "Предоставление доступа клиенту на 2 телефона"
-    ],
-    "timeline": [
-      {
-        "date": "30.04.2026",
-        "title": "Осмотр",
-        "text": "Осмотрели объект и подготовили смету"
-      },
-      {
-        "date": "29.05.2026 – 08.06.2026",
-        "title": "Монтаж",
-        "text": "Установили 3 камеры, 11 дней работ"
-      },
-      {
-        "date": "08.06.2026",
-        "title": "Сдача",
-        "text": "Настроили доступ с телефона и сдали объект"
-      }
-    ],
-    "photos": [
-      "assets/cases/chastnyy-dom-samarskaya-oblast-2/01-ba7791.webp",
-      "assets/cases/chastnyy-dom-samarskaya-oblast-2/02-bbd689.webp",
-      "assets/cases/chastnyy-dom-samarskaya-oblast-2/03-cab322.webp",
-      "assets/cases/chastnyy-dom-samarskaya-oblast-2/04-90df7a.webp",
-      "assets/cases/chastnyy-dom-samarskaya-oblast-2/05-b3228b.webp",
-      "assets/cases/chastnyy-dom-samarskaya-oblast-2/06-0f8f86.webp",
-      "assets/cases/chastnyy-dom-samarskaya-oblast-2/07-6a43c2.webp",
-      "assets/cases/chastnyy-dom-samarskaya-oblast-2/08-eaba02.webp",
-      "assets/cases/chastnyy-dom-samarskaya-oblast-2/09-795eaf.webp",
-      "assets/cases/chastnyy-dom-samarskaya-oblast-2/10-81b969.webp",
-      "assets/cases/chastnyy-dom-samarskaya-oblast-2/11-6b4b60.webp"
-    ],
-    "url": "cases/chastnyy-dom-samarskaya-oblast-2.html"
   },
   {
     "slug": "avtoservis-samarskaya-oblast-2",
