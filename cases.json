@@ -1,5 +1,64 @@
 [
   {
+    "slug": "avtoservis-samarskaya-oblast",
+    "date": "2026-09-26",
+    "type": "Автосервис",
+    "city": "Самарская область",
+    "addr": "Чапаевск, Железнодорожная",
+    "title": "Обновить видеонаблюдение на автосервисе",
+    "lead": "Заменили аналоговые камеры на новые, подключили новый регистратор. Теперь владелец всегда в курсе, что происходит на территории автосервиса.",
+    "task": [
+      "Видеонаблюдение на автосервисе устарело, требовалось обновление системы без прокладки новых кабелей.",
+      "Важно было сохранить существующие места установки камер и подключить новый регистратор."
+    ],
+    "done": [
+      "Заменили 6 аналоговых камер на новые",
+      "Подключили новый регистратор",
+      "Настроили систему записи"
+    ],
+    "result": [],
+    "nums": [
+      6,
+      null,
+      12
+    ],
+    "works": [
+      "Монтаж 6 уличных камер",
+      "Монтаж регистратора",
+      "Демонтаж шести камер",
+      "Настройка регистратора"
+    ],
+    "timeline": [
+      {
+        "date": "31.07.2026",
+        "title": "Осмотр",
+        "text": "Осмотрели объект и подготовили смету"
+      },
+      {
+        "date": "31.07.2026 – 11.08.2026",
+        "title": "Монтаж",
+        "text": "Установили 6 камер, 12 дней работ"
+      },
+      {
+        "date": "11.08.2026",
+        "title": "Сдача",
+        "text": "Настроили доступ с телефона и сдали объект"
+      }
+    ],
+    "photos": [
+      "assets/cases/avtoservis-samarskaya-oblast/01-9ce23b.webp",
+      "assets/cases/avtoservis-samarskaya-oblast/02-090289.webp",
+      "assets/cases/avtoservis-samarskaya-oblast/03-f616a6.webp",
+      "assets/cases/avtoservis-samarskaya-oblast/04-6dd569.webp",
+      "assets/cases/avtoservis-samarskaya-oblast/05-7a60fb.webp",
+      "assets/cases/avtoservis-samarskaya-oblast/06-02bb25.webp",
+      "assets/cases/avtoservis-samarskaya-oblast/07-b4e485.webp",
+      "assets/cases/avtoservis-samarskaya-oblast/08-763e10.webp",
+      "assets/cases/avtoservis-samarskaya-oblast/09-68cff6.webp"
+    ],
+    "url": "cases/avtoservis-samarskaya-oblast.html"
+  },
+  {
     "slug": "mkd-samarskaya-oblast",
     "date": "2026-09-26",
     "type": "МКД",
