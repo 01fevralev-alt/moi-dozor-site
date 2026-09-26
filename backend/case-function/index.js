@@ -735,13 +735,14 @@ async function setup(selfUrl) {
     })
   ]);
   // Группы, где состоит бот: номер нужной — в переменную MAX_CHAT_ID (черновики кейсов идут туда)
-  const chats = await max("/chats?count=50").then(r => (r.chats || []).filter(c => c.type !== "dialog")).catch(() => []);
+  const chats = await max("/chats").then(r => (r.chats || []).filter(c => c.type !== "dialog")).catch(() => []);
   const cur = env("MAX_CHAT_ID");
   return [
     "Проверка настроек автокейсов «Мой Дозор»", "", ...lines, "",
     "Группы MAX, где состоит бот (номер — в переменную MAX_CHAT_ID):",
     ...(chats.length ? chats.map(c => `${String(c.chat_id) === cur ? "👉" : "  "} «${c.title || "без названия"}» = ${c.chat_id}${String(c.chat_id) === cur ? "  ← сюда сейчас идут черновики кейсов" : ""}`)
-      : ["  не видно ни одной — добавьте бота в группу и напишите там любое сообщение"]), "",
+      : [`  MAX не отдал список. Сейчас черновики идут в группу ${cur || "—"}.`]),
+    "  Узнать номер любой группы: напишите в ней «номер группы» — бот ответит.", ""
     "Адрес для Webhook в amoCRM (этап «Проверено»):", amoHook, "",
     "Если какая-то строка с ❌ — пришлите этот экран (адреса можно замазать)."
   ].join("\n");
@@ -782,7 +783,12 @@ module.exports.handler = async (event, context) => {
     try { u = JSON.parse(body); } catch {}
     const chat = String(u.message?.recipient?.chat_id ?? "");
     try {
+      const said = String(u.message?.body?.text || "").trim();
       if (u.update_type === "message_callback") await onCallback(u.callback, u.message);
+      // «номер группы» в любой группе, где есть бот, — бот отвечает её номером (для MAX_CHAT_ID)
+      else if (u.update_type === "message_created" && !u.message?.sender?.is_bot && chat && /^номер\s+(группы|чата)/i.test(said))
+        await max(`/messages?chat_id=${encodeURIComponent(chat)}`, { text: `Номер этой группы: ${chat}\n` +
+          (chat === env("MAX_CHAT_ID") ? "Сюда сейчас приходят черновики кейсов." : "Чтобы черновики кейсов приходили сюда, вставьте этот номер в переменную MAX_CHAT_ID функции moidozor-case.") });
       else if (u.update_type === "message_created" && !u.message?.sender?.is_bot && chat === env("MAX_CHAT_ID")) await onReply(u.message);
     } catch (e) { console.error(e); }
     return text200();
