@@ -336,6 +336,7 @@ function draftText(d) {
     "  (номер фото — в углу, когда откроете фото; можно несколько строк в одном сообщении)",
     "• весь текст с «Заголовок:», «Сделали:»… — заменю целиком",
     "• пожелание («короче», «добавь, что работали ночью») — перепишу",
+    "• старые сделки: напишите в группу <code>кейс 6912345</code> (номер из адреса сделки) — пришлю черновик",
     "⚠️ Проверьте фото: нет ли лиц, номеров машин и схемы слепых зон."
   ];
   return lines.join("\n");
@@ -533,10 +534,39 @@ async function onCallback(cb, msg) {
   return answer(cb, msg, "Готово");
 }
 
+// «кейс 6912345», «кейсы 6912345, 6898765» или ссылки на сделки — черновики по старым сделкам без переноса по воронке.
+// Без номера («кейс хороший») — не команда.
+function parseCaseCommand(text) {
+  if (!/^кейс[ыа]?(?=[\s:,]|$)/i.test(text)) return null;
+  const ids = [...text.matchAll(/leads\/detail\/(\d{5,10})/g)].map(m => Number(m[1]));
+  for (const m of text.replace(/https?:\/\/\S+/g, " ").matchAll(/(?<!\d)\d{5,10}(?!\d)/g)) ids.push(Number(m[0]));
+  return ids.length ? [...new Set(ids)] : null;
+}
+
+async function caseCommand(ids, mid) {
+  const take = ids.slice(0, 10), queued = [];
+  for (const lead of take) {
+    const d = await getJson(`drafts/${lead}.json`);
+    if (d && d.status === "draft" && Date.now() - Date.parse(d.created) < 10 * 60e3) continue; // только что собирали
+    await queue("build", lead);
+    queued.push(lead);
+  }
+  const skipped = take.filter(l => !queued.includes(l));
+  await say([
+    queued.length ? `📥 Собираю ${queued.length > 1 ? "черновики" : "черновик"}: ${queued.map(l => `№${l}`).join(", ")} — пришлю в течение ${queued.length > 2 ? "5–10 минут" : "пары минут"}.` : "",
+    skipped.length ? `Черновик уже есть (собран меньше 10 минут назад): ${skipped.map(l => `№${l}`).join(", ")}.` : "",
+    ids.length > 10 ? `За раз — не больше 10 сделок, остальные пришлите следующим сообщением.` : ""
+  ].filter(Boolean).join("\n"), { reply: mid });
+}
+
 async function onReply(msg) {
   const replyTo = msg.link?.type === "reply" ? msg.link.message?.mid : null;
   const text = String(msg.body?.text || "").trim();
-  if (!replyTo || !text) return;                      // обычная переписка в группе — не наша
+  if (!text) return;
+  if (!replyTo) {                                     // обычная переписка в группе — не наша, кроме команды «кейс N»
+    const ids = parseCaseCommand(text);
+    return ids ? caseCommand(ids, msg.body?.mid) : undefined;
+  }
   const ref = await getJson(`mids/${replyTo}.json`);
   if (!ref) return;
   const d = await getJson(`drafts/${ref.lead}.json`);
