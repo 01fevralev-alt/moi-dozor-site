@@ -7,8 +7,9 @@
 //   TG_CHAT_ID       номер группы, например -5236379545
 //   AMO_DOMAIN       адрес CRM, например moidozor.amocrm.ru
 //   AMO_TOKEN        долгосрочный токен интеграции amoCRM
-//   AMO_PIPELINE_ID  необязательно: воронка (без неё — основная)
-//   AMO_STATUS_ID    необязательно: этап воронки (без него — первый этап)
+//   AMO_PIPELINE     необязательно: название воронки (без него — главная воронка)
+//   AMO_STATUS       необязательно: название этапа, например «НОВЫЙ ЛИД реклама» (без него — первый этап)
+//   AMO_PIPELINE_ID, AMO_STATUS_ID — то же числами, если названия не подходят
 //   ALLOWED_ORIGINS  адреса сайта через запятую; пусто — принимать откуда угодно
 
 const CHANNELS = { call: "позвонить", telegram: "написать в Telegram", max: "написать в MAX", whatsapp: "написать в WhatsApp" };
@@ -44,17 +45,42 @@ function samaraTime() {
   return `${p(d.getUTCDate())}.${p(d.getUTCMonth() + 1)}.${d.getUTCFullYear()} ${p(d.getUTCHours())}:${p(d.getUTCMinutes())}`;
 }
 
+const amoDomain = () => env("AMO_DOMAIN").replace(/^https?:\/\//, "").replace(/\/.*$/, "");
+const amoApi = (path, body) => fetch(`https://${amoDomain()}${path}`, {
+  method: body ? "POST" : "GET",
+  headers: { Authorization: `Bearer ${env("AMO_TOKEN")}`, "Content-Type": "application/json" },
+  body: body ? JSON.stringify(body) : undefined
+}).then(async r => {
+  const text = await r.text();
+  if (!r.ok) throw new Error(`amoCRM ${r.status}: ${text.slice(0, 300)}`);
+  return text ? JSON.parse(text) : {};
+});
+
+// Воронка и этап по названию. Ищем один раз, пока функция «тёплая»; не нашли — пишем в лог варианты и ставим по умолчанию.
+const norm = s => String(s || "").toLowerCase().replace(/ё/g, "е").replace(/\s+/g, " ").trim();
+let stagePromise = null;
+function amoStage() {
+  if (env("AMO_PIPELINE_ID") || env("AMO_STATUS_ID") || !(env("AMO_PIPELINE") || env("AMO_STATUS")))
+    return Promise.resolve({ pipeline_id: Number(env("AMO_PIPELINE_ID")) || undefined, status_id: Number(env("AMO_STATUS_ID")) || undefined });
+  stagePromise ??= amoApi("/api/v4/leads/pipelines").then(data => {
+    const pipelines = data?._embedded?.pipelines || [];
+    const want = norm(env("AMO_PIPELINE"));
+    const p = want ? pipelines.find(x => norm(x.name) === want) || pipelines.find(x => norm(x.name).includes(want))
+                   : pipelines.find(x => x.is_main) || pipelines[0];
+    if (!p) {
+      console.warn(`Воронка «${env("AMO_PIPELINE")}» не найдена. Есть: ${pipelines.map(x => x.name).join(" | ")}`);
+      return {};
+    }
+    const statuses = p._embedded?.statuses || [], ws = norm(env("AMO_STATUS"));
+    const s = ws && (statuses.find(x => norm(x.name) === ws) || statuses.find(x => norm(x.name).includes(ws)));
+    if (ws && !s) console.warn(`Этап «${env("AMO_STATUS")}» в воронке «${p.name}» не найден. Есть: ${statuses.map(x => x.name).join(" | ")}`);
+    return { pipeline_id: p.id, status_id: s?.id };
+  }).catch(e => { stagePromise = null; throw e; });
+  return stagePromise;
+}
+
 async function toAmo(lead) {
-  const domain = env("AMO_DOMAIN").replace(/^https?:\/\//, "").replace(/\/.*$/, "");
-  const api = (path, body) => fetch(`https://${domain}${path}`, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${env("AMO_TOKEN")}`, "Content-Type": "application/json" },
-    body: JSON.stringify(body)
-  }).then(async r => {
-    const text = await r.text();
-    if (!r.ok) throw new Error(`amoCRM ${r.status}: ${text.slice(0, 300)}`);
-    return text ? JSON.parse(text) : {};
-  });
+  const api = amoApi;
 
   const deal = {
     name: `Заявка с сайта: ${lead.phone}`,
@@ -66,8 +92,9 @@ async function toAmo(lead) {
       }]
     }
   };
-  if (env("AMO_PIPELINE_ID")) deal.pipeline_id = Number(env("AMO_PIPELINE_ID"));
-  if (env("AMO_STATUS_ID")) deal.status_id = Number(env("AMO_STATUS_ID"));
+  const { pipeline_id, status_id } = await amoStage().catch(e => { console.warn(`Этапы amoCRM не получены: ${e.message}`); return {}; });
+  if (pipeline_id) deal.pipeline_id = pipeline_id;
+  if (status_id) deal.status_id = status_id;
 
   const [created] = await api("/api/v4/leads/complex", [deal]);
   const id = created?.id;
@@ -131,7 +158,7 @@ module.exports.handler = async event => {
   const p = lead.phone;
   const phoneText = `+7 (${p.slice(2, 5)}) ${p.slice(5, 8)}-${p.slice(8, 10)}-${p.slice(10)}`;
   const amoLine = amoId
-    ? `<a href="https://${esc(env("AMO_DOMAIN").replace(/^https?:\/\//, "").replace(/\/.*$/, ""))}/leads/detail/${amoId}">Сделка в amoCRM №${amoId}</a>`
+    ? `<a href="https://${esc(amoDomain())}/leads/detail/${amoId}">Сделка в amoCRM №${amoId}</a>`
     : amoError ? `⚠️ В amoCRM не записалось — внесите вручную` : null;
   const lines = [`🔔 <b>Заявка с сайта</b>`, ``, `📞 ${phoneText}`];
   if (lead.name) lines.push(`👤 ${esc(lead.name)}`);
