@@ -209,7 +209,7 @@ module.exports.handler = async event => {
 
   const ad = Object.entries(lead.ad).map(([k, v]) => `${k}=${v}`).join(", ");
   const tech = [lead.page && `Страница: ${lead.page}`, ad && `Реклама: ${ad}`, lead.ym_uid && `Яндекс Метрика ClientID: ${lead.ym_uid}`];
-  const TERMS = "Условия: партнёру 10 % от договора (не более 50 000 ₽) в течение 3 дней после аванса клиента; знакомому — регистратор ATIX AT-NVR-1109 (v2) в подарок.";
+  const TERMS = "Условия: партнёру 10 % от договора (не более 50 000 ₽) в течение 3 дней после аванса клиента; знакомому — 9-канальный регистратор в подарок при договоре от 30 000 ₽.";
 
   // Что и куда пишем в amoCRM
   let deal = null;
@@ -245,7 +245,7 @@ module.exports.handler = async event => {
       `👥 Знакомый: ${esc(lead.name || "имя не указано")}, ${phoneText(lead.phone)}`,
       `🙋 Рекомендовал: ${esc(partner.name || "имя не указано")}, ${phoneText(partner.phone)}`];
     if (lead.note) lines.push(`📝 ${esc(lead.note)}`);
-    lines.push(`💰 Партнёру 10 % (до 50 000 ₽) после аванса · знакомому — регистратор в подарок`);
+    lines.push(`💰 Партнёру 10 % (до 50 000 ₽) после аванса · знакомому — регистратор в подарок при договоре от 30 000 ₽`);
   } else if (kind === "job") {
     lines = [`👷 <b>Отклик на вакансию «Монтажник»</b>`, ``, `📞 ${phoneText(lead.phone)}`];
     if (lead.name) lines.push(`👤 ${esc(lead.name)}`);

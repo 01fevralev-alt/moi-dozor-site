@@ -152,7 +152,7 @@ document.addEventListener("click", e => {
 (() => {
   const range = document.getElementById("calcRange");
   if (!range) return;
-  const sum = document.getElementById("calcSum"), pay = document.getElementById("calcPay"), capNote = document.getElementById("calcCap");
+  const sum = document.getElementById("calcSum"), pay = document.getElementById("calcPay"), capNote = document.getElementById("calcCap"), gift = document.getElementById("calcGift");
   const rub = n => n.toLocaleString("ru-RU") + " ₽";
   let moved = false;
   const upd = () => {
@@ -160,6 +160,8 @@ document.addEventListener("click", e => {
     sum.textContent = rub(v);
     pay.textContent = rub(p);
     capNote.hidden = v * 0.1 < 50000;
+    // Подарок-регистратор знакомому — при договоре от 30 000 ₽
+    if (gift) gift.textContent = v >= 30000 ? "+ регистратор за 7 250 ₽ — знакомому в подарок" : "Регистратор в подарок — при договоре от 30 000 ₽";
   };
   range.addEventListener("input", () => { upd(); if (!moved) { moved = true; goal("partner_calc"); } });
   upd();
