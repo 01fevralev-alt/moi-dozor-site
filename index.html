@@ -1798,11 +1798,13 @@ function swipe(el, step){
 
 /* ---------- Cases gallery: big cards and the strip, both swipe; the strip follows the big card ---------- */
 // Настоящие кейсы лежат в cases.json (их публикует бот по сделкам из amoCRM, новые первыми).
-// На главной — только кейсы с фото. Пока таких меньше трёх, после них идут примеры из SITE.cases.
+// На главной — только кейсы с фото, сначала объекты с большим числом камер (при равенстве — новее выше).
+// Пока таких меньше трёх, после них идут примеры из SITE.cases.
 async function loadCases(){
   let real = [];
   try { const r = await fetch("cases.json", { cache: "no-cache" }); if (r.ok) real = await r.json(); } catch {}
-  real = (Array.isArray(real) ? real : []).filter(c => c.photos?.length).map(c => ({ ...c, photo: c.photos[0] }));
+  real = (Array.isArray(real) ? real : []).filter(c => c.photos?.length).map(c => ({ ...c, photo: c.photos[0] }))
+    .sort((a, b) => (b.nums?.[0] || 0) - (a.nums?.[0] || 0) || String(b.date).localeCompare(String(a.date)));
   return real.length >= 3 ? real : [...real, ...SITE.cases];
 }
 (async () => {
@@ -1831,7 +1833,7 @@ async function loadCases(){
         <div class="case-big-nums">${LABELS.map((l, k) => `<div><b>${num(c.nums?.[k])}</b><span>${l}</span></div>`).join("")}</div>
         <div class="case-actions">
           <a href="#final" class="btn btn-accent" data-modal="case" data-from="case" data-case="${esc(label(c))}">Хочу так же</a>
-          ${c.url ? `<a class="btn btn-ghost" href="${esc(c.url)}">Подробнее<span class="lg-only"> о проекте</span> →</a>` : ""}
+          ${c.url ? `<a class="btn btn-ghost" href="${esc(c.url)}"><span>Подробнее<span class="lg-only"> о проекте</span></span> →</a>` : ""}
         </div>
       </div>
     </article>`).join("");
