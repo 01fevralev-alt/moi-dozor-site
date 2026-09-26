@@ -1840,7 +1840,7 @@ function swipe(el, step){
   const cards = [...track.children];
   const stageStep = () => stage.clientWidth + 14;
   const cur = () => Math.max(0, Math.min(n - 1, Math.round(stage.scrollLeft / stageStep())));
-  const go = i => stage.scrollTo({ left: Math.max(0, Math.min(n - 1, i)) * stageStep(), behavior: smooth });
+  const go = (i, behavior = smooth) => stage.scrollTo({ left: Math.max(0, Math.min(n - 1, i)) * stageStep(), behavior });
 
   // Лента: стрелки и полоса прогресса
   const prev = document.querySelector("[data-slide='-1']"), next = document.querySelector("[data-slide='1']"), bar = document.getElementById("casesBar");
@@ -1861,6 +1861,7 @@ function swipe(el, step){
   aPrev.addEventListener("click", () => go(cur() - 1));
   aNext.addEventListener("click", () => go(cur() + 1));
   let shown = -1;
+  const mark = i => { shown = i; cards.forEach((c, k) => { c.classList.toggle("is-active", k === i); c.setAttribute("aria-current", k === i ? "true" : "false"); }); };
   const pos = document.getElementById("casePos"), head = document.querySelector(".case-head");
   const sync = () => {
     const i = cur();
@@ -1869,18 +1870,21 @@ function swipe(el, step){
     aPrev.disabled = i === 0;
     aNext.disabled = i === n - 1;
     if (i === shown) return;
-    shown = i;
-    cards.forEach((c, k) => { c.classList.toggle("is-active", k === i); c.setAttribute("aria-current", k === i ? "true" : "false"); });
+    mark(i);
     const c = cards[i], tl = track.scrollLeft, l = c.offsetLeft - track.offsetLeft;
     if (l < tl || l + c.offsetWidth > tl + track.clientWidth) track.scrollTo({ left: l, behavior: smooth });
   };
   stage.addEventListener("scroll", () => requestAnimationFrame(sync), { passive: true });
 
-  // Тап по карточке в ленте — она открывается большой
+  // Тап по карточке в ленте — она открывается большой.
+  // Две плавные прокрутки сразу (вбок и вверх) браузеры не тянут: вторая обрывает первую.
+  // Поэтому если большой кейс за экраном — переключаем его мгновенно, а плавно едет только страница.
   const open = card => {
-    go(+card.dataset.caseI);
-    const top = stage.getBoundingClientRect().top;
-    if (top < 0 || top > innerHeight * .5) stage.scrollIntoView({ behavior: smooth, block: "start" });
+    const i = +card.dataset.caseI, top = stage.getBoundingClientRect().top;
+    const away = top < 0 || top > innerHeight * .5;
+    mark(i);
+    go(i, away ? "auto" : smooth);
+    if (away) stage.scrollIntoView({ behavior: smooth, block: "start" });
   };
   track.addEventListener("click", e => { const c = e.target.closest("[data-case-i]"); if (c) open(c); });
   track.addEventListener("keydown", e => { const c = e.target.closest("[data-case-i]"); if (c && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); open(c); } });
