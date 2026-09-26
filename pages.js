@@ -1,4 +1,4 @@
-/* Подстраницы (partner.html, jobs.html): Метрика, плашка cookie, маска телефона, отправка формы.
+/* Подстраницы (partner.html, jobs.html, cases/*.html): Метрика, плашка cookie, маска телефона, отправка формы.
    Всё по образцу index.html; адрес функции и счётчик — те же. */
 // Корень сайта — от адреса этого скрипта: страницы лежат и в корне, и в cases/
 const BASE = new URL(".", document.currentScript.src).href;
@@ -165,4 +165,45 @@ document.addEventListener("click", e => {
   };
   range.addEventListener("input", () => { upd(); if (!moved) { moved = true; goal("partner_calc"); } });
   upd();
+})();
+
+/* ---------- Галерея кейса: нажали на фото — открывается крупно; стрелки, свайп, Esc ---------- */
+(() => {
+  const btns = $$(".gallery button");
+  if (!btns.length || typeof HTMLDialogElement !== "function") return;
+  const srcs = btns.map(b => b.querySelector("img").src);
+  document.body.insertAdjacentHTML("beforeend", `<dialog class="lbox" aria-label="Фото объекта">
+    <div class="lbox-img"><img alt=""></div>
+    <button class="lbox-x" type="button" aria-label="Закрыть">✕</button>
+    <div class="lbox-bar"><button type="button" data-d="-1" aria-label="Предыдущее фото">←</button><span></span><button type="button" data-d="1" aria-label="Следующее фото">→</button></div>
+  </dialog>`);
+  const box = document.body.lastElementChild, img = box.querySelector("img"), pos = box.querySelector("span");
+  const [prev, next] = box.querySelectorAll("[data-d]");
+  let i = 0;
+  const show = k => {
+    i = Math.max(0, Math.min(srcs.length - 1, k));
+    img.src = srcs[i];
+    img.alt = btns[i].querySelector("img").alt;
+    pos.textContent = `${i + 1} / ${srcs.length}`;
+    prev.disabled = i === 0;
+    next.disabled = i === srcs.length - 1;
+  };
+  btns.forEach((b, k) => b.addEventListener("click", () => { show(k); box.showModal(); goal("case_photo"); }));
+  box.addEventListener("click", e => {
+    const d = e.target.closest("[data-d]");
+    if (d) show(i + +d.dataset.d);
+    else if (e.target.closest(".lbox-x") || e.target === box || e.target.classList.contains("lbox-img")) box.close();
+  });
+  box.addEventListener("keydown", e => {
+    if (e.key === "ArrowLeft") show(i - 1);
+    if (e.key === "ArrowRight") show(i + 1);
+  });
+  let x0 = null;
+  box.addEventListener("touchstart", e => { x0 = e.touches[0].clientX; }, { passive: true });
+  box.addEventListener("touchend", e => {
+    if (x0 === null) return;
+    const dx = e.changedTouches[0].clientX - x0;
+    x0 = null;
+    if (Math.abs(dx) > 40) show(i + (dx < 0 ? 1 : -1));
+  }, { passive: true });
 })();

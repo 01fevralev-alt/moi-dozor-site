@@ -1084,7 +1084,7 @@ h3{font-weight:700;letter-spacing:-.025em;line-height:1.15}
       <h2 id="h-cases">Наши работы</h2>
       <p class="sec-sub">Задача клиента, схема камер и кадры днём и ночью — по каждому объекту отдельная страница.</p>
 
-      <!-- Кейсы заполняются из SITE.cases (скрипт «Cases gallery»): большие карточки листаются, лента под ними связана с ними -->
+      <!-- Кейсы заполняются из cases.json и SITE.cases (скрипт «Cases gallery»): большие карточки листаются, лента под ними связана с ними -->
       <div class="slider-head case-head">
         <p class="case-pos"><span id="casePos">Объект 1 из 6</span><span class="swipe-hint">← листайте →</span></p>
         <div class="slider-nav">
@@ -1391,7 +1391,8 @@ const SITE = {
   hours: { from: 9, to: 20, days: [0,1,2,3,4,5,6] }, // по времени Самары, 0 = вс
   hoursLabel: "Ежедневно с 9:00 до 20:00",
   tzOffset: 4,                                  // Самара, UTC+4
-  // КЕЙСЫ «Наши работы». Каждый объект — один раз: из этого собираются и большая карточка, и карточка в ленте.
+  // ПРИМЕРЫ КЕЙСОВ «Наши работы» — показываются, пока настоящих кейсов с фото (cases.json) меньше трёх.
+  // Каждый объект — один раз: из этого собираются и большая карточка, и карточка в ленте.
   // [в квадратных скобках] — заглушка, на сайте подсвечивается. nums: камер, метров кабеля, дней монтажа (null — заглушка).
   // photo: путь к фото (пусто — рамка «Фото объекта появится…»); review: есть видеоотзыв; demo: пометка «Пример».
   // url: страница кейса (cases/…html) — тогда на большой карточке появляется «Подробнее о проекте».
@@ -1796,21 +1797,31 @@ function swipe(el, step){
 }
 
 /* ---------- Cases gallery: big cards and the strip, both swipe; the strip follows the big card ---------- */
-(() => {
+// Настоящие кейсы лежат в cases.json (их публикует бот по сделкам из amoCRM, новые первыми).
+// На главной — только кейсы с фото. Пока таких меньше трёх, после них идут примеры из SITE.cases.
+async function loadCases(){
+  let real = [];
+  try { const r = await fetch("cases.json", { cache: "no-cache" }); if (r.ok) real = await r.json(); } catch {}
+  real = (Array.isArray(real) ? real : []).filter(c => c.photos?.length).map(c => ({ ...c, photo: c.photos[0] }));
+  return real.length >= 3 ? real : [...real, ...SITE.cases];
+}
+(async () => {
   const stage = document.getElementById("caseStage"), track = document.getElementById("casesTrack");
-  if (!stage || !track || !SITE.cases?.length) return;
+  if (!stage || !track) return;
+  const CASES = await loadCases();
+  if (!CASES.length) return;
   const esc = t => String(t ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
   const ph = t => esc(t).replace(/\[([^\]]+)\]/g, '<span class="ph" title="Заглушка">[$1]</span>');
   const num = v => v === null || v === undefined || v === "" ? '<span class="ph">[N]</span>' : esc(v);
   const LABELS = ["камер", "м кабеля", "дня монтажа"];
-  const n = SITE.cases.length, pad = i => String(i + 1).padStart(2, "0");
+  const n = CASES.length, pad = i => String(i + 1).padStart(2, "0");
   const photo = (c, i, big) => `<div class="case-ph"><span class="vf tl"></span><span class="vf tr"></span><span class="vf bl"></span><span class="vf br"></span>
       ${c.photo ? `<img src="${esc(c.photo)}" alt="${esc(c.type)}" loading="lazy">` : `<p><b>Фото объекта</b>появится после согласования с клиентом</p>`}
       <span class="case-cam">CAM ${pad(i)}</span>${big ? `<span class="case-count">${i + 1} / ${n}</span>` : ""}
       ${big && c.demo ? '<span class="tag-demo">Пример</span>' : ""}${c.review ? '<span class="case-rev"><i></i>Видеоотзыв</span>' : ""}</div>`;
   const label = c => `${c.type}, ${c.addr}`.replace(/\[[^\]]*\]/g, "").replace(/[, ]+$/, "").slice(0, 90);
 
-  stage.innerHTML = SITE.cases.map((c, i) => `<article class="case-hero card" aria-label="Объект ${i + 1} из ${n}">
+  stage.innerHTML = CASES.map((c, i) => `<article class="case-hero card" aria-label="Объект ${i + 1} из ${n}">
       ${photo(c, i, true)}
       <div class="case-hero-in">
         <p class="case-type">${ph(c.type)}</p>
@@ -1825,7 +1836,7 @@ function swipe(el, step){
       </div>
     </article>`).join("");
 
-  track.innerHTML = SITE.cases.map((c, i) => `<article class="case card" tabindex="0" role="button" data-case-i="${i}" aria-label="Открыть: ${esc(label(c))}">
+  track.innerHTML = CASES.map((c, i) => `<article class="case card" tabindex="0" role="button" data-case-i="${i}" aria-label="Открыть: ${esc(label(c))}">
       ${photo(c, i, false)}
       <div class="case-body">
         <p class="case-type">${ph(c.type)}</p>
