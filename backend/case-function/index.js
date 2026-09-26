@@ -109,17 +109,41 @@ function field(lead, name) {
 }
 const num = v => { const n = parseFloat(String(v).replace(",", ".")); return Number.isFinite(n) && n > 0 ? Math.round(n) : null; };
 const PRIVATE = /частн|дач|квартир|снт/i;
+// «Расшифровка счета» монтажника — по прайсу, с суммами. На сайт идут только работы: суммы вырезаем
+const noPrices = s => String(s).split(/^\s*итого/im)[0].replace(/\s*\d[\d\s]*(?:[.,]\d+)?\s*(?:₽|руб\.?|р\.)/gi, "").replace(/[ \t]+/g, " ")
+  .split("\n").map(l => l.trim()).filter(Boolean).join("\n");
+
+// Даты amoCRM — секунды; показываем по Самаре
+const ddmm = sec => { const d = new Date((sec + 4 * 3600) * 1000), p = n => String(n).padStart(2, "0"); return `${p(d.getUTCDate())}.${p(d.getUTCMonth() + 1)}.${d.getUTCFullYear()}`; };
+// «Как проходил проект» — только по датам из сделки, без нейросети
+function timeline({ inspect, start, end, result, cams }) {
+  const out = [];
+  if (inspect) out.push({ date: ddmm(inspect), title: "Осмотр", text: "Осмотрели объект и подготовили смету" });
+  if (start) {
+    const days = end && end >= start ? Math.round((end - start) / 86400) + 1 : 1;
+    out.push({ date: end && end > start ? `${ddmm(start)} – ${ddmm(end)}` : ddmm(start), title: "Монтаж",
+      text: `${cams ? `Установили ${cams} ${cams % 10 === 1 && cams % 100 !== 11 ? "камеру" : [2, 3, 4].includes(cams % 10) && ![12, 13, 14].includes(cams % 100) ? "камеры" : "камер"}` : "Смонтировали систему"}, ${days} ${days === 1 ? "день" : days < 5 ? "дня" : "дней"} работ` });
+  }
+  if (end || start) out.push({ date: ddmm(end || start), title: "Сдача", text: /акт/i.test(result) ? "Настроили доступ с телефона, подписали акт" : "Настроили доступ с телефона и сдали объект" });
+  return out;
+}
 
 async function readLead(id) {
   const lead = await amo(`/api/v4/leads/${id}`);
   const g = name => String(field(lead, name) ?? "").trim();
   const start = Number(field(lead, "Дата начала монтажа")), end = Number(field(lead, "Дата окончания монтажа"));
-  const cable = (num(g("Затрачено UTP улица")) || 0) + (num(g("Затрачено UTP внутренний")) || 0);
+  const inspect = Number(field(lead, "Дата осмотра"));
+  const bill = g("Расшифровка счета");
+  // Кабель: сколько монтажник по факту затратил UTP (улица + внутри); пусто — берём из строк «Протяжка UTP … 107м» в счёте
+  const billUtp = [...bill.matchAll(/UTP[^\n]*?(\d+)\s*м(?![а-яё])/gi)].reduce((s, m) => s + Number(m[1]), 0);
+  const cable = (num(g("Затрачено UTP улица")) || 0) + (num(g("Затрачено UTP внутренний")) || 0) || billUtp;
   const link = g("Папка Контент");
   return {
     id, type: g("Тип объекта") || "Объект", city: g("Город"), addrRaw: g("Адрес"),
     private: PRIVATE.test(g("Тип объекта")) || /B2C|частн/i.test(g("Тип клиента")),
     placement: g("Размещение"), service: g("Тип услуги"), note: g("Примечание к монтажу").slice(0, 600),
+    works: noPrices(bill).slice(0, 1200),
+    timeline: timeline({ inspect, start, end, result: g("Результат монтажа"), cams: num(g("Камер (шт)")) }),
     cams: num(g("Камер (шт)")), cable: cable || null,
     days: start && end && end >= start ? Math.round((end - start) / 86400) + 1 : null,
     folder: (link.match(/folders\/([\w-]+)/) || link.match(/[?&]id=([\w-]+)/) || [])[1] || "",
@@ -169,13 +193,18 @@ const SYSTEM = `Ты пишешь короткие кейсы для сайта 
 Пиши по-русски, просто и конкретно, без канцелярита, восклицаний и рекламных штампов.
 Используй только факты из данных. Не выдумывай цифры, проблемы клиента, сроки, марки оборудования.
 Не упоминай имя клиента, телефоны, названия компаний, внутренние заметки о деньгах и сотрудниках.
+Никогда не пиши цены, суммы и стоимость работ.
+Из заметки менеджера бери только то, что говорит о задаче клиента или об объекте; рабочие заметки о ходе работ («ждём, пока клиент…») не переносить.
+Если кабель прокладывал сам клиент — не приписывай прокладку кабеля нам.
+Если есть история от руководителя — это главный источник: бери из неё только факты, ничего не добавляй от себя.
 Не описывай точное расположение камер и слепые зоны объекта. Ответ — только JSON, без пояснений.`;
 const SCHEMA = `{
   "addr": "адрес для сайта: город, улица и номер дома; без офиса, квартиры, подъезда, корпуса; если объект частный (дом, дача, квартира) — город и улица без номера дома",
   "title": "задача клиента одной фразой до 70 символов, с глагола: «Видеть…», «Контролировать…», «Закрыть…»",
   "lead": "1–2 предложения: что сделали и что это дало клиенту",
-  "task": ["1–2 коротких абзаца о задаче клиента — только если в данных есть основания, иначе пустой массив"],
-  "done": ["3–5 коротких пунктов «что сделали» по данным: сколько камер, где (по полю «Размещение»), кабель, запись и доступ с телефона"]
+  "task": ["абзацы о задаче клиента: если есть история — 1–2 абзаца по ней; иначе 1 абзац о типичной задаче для такого объекта, без выдуманных подробностей"],
+  "done": ["4–6 коротких пунктов «что сделали»: по работам монтажника, числу камер, размещению и кабелю; каждый пункт — конкретное действие"],
+  "result": ["3 коротких пункта «что изменилось для клиента» — только если есть история; иначе пустой массив"]
 }`;
 
 async function gpt(user) {
@@ -200,22 +229,31 @@ const clean = (c, raw) => ({
   lead: String(c.lead || "").trim(),
   task: (Array.isArray(c.task) ? c.task : [c.task]).map(s => String(s || "").trim()).filter(Boolean).slice(0, 3),
   done: (Array.isArray(c.done) ? c.done : []).map(s => String(s || "").trim()).filter(Boolean).slice(0, 6),
-  nums: [raw.cams, raw.cable, raw.days]
+  result: (Array.isArray(c.result) ? c.result : []).map(s => String(s || "").trim()).filter(Boolean).slice(0, 4),
+  nums: [raw.cams, raw.cable, raw.days],
+  // Эти два — из CRM как есть, без нейросети
+  works: String(raw.works || "").split("\n").map(s => s.trim().replace(/[.;,]+$/, "")).filter(Boolean).slice(0, 15),
+  timeline: raw.timeline || []
 });
 
-function writeCase(raw) {
+function writeCase(raw, story = "") {
   const data = [
     `Тип объекта: ${raw.type}`, `Город: ${raw.city || "—"}`, `Адрес из CRM: ${raw.addrRaw || "—"}`,
     `Частный объект: ${raw.private ? "да" : "нет"}`, `Размещение камер: ${raw.placement || "—"}`, `Услуга: ${raw.service || "—"}`,
     `Камер: ${raw.cams ?? "—"}`, `Кабеля, м: ${raw.cable ?? "—"}`, `Дней монтажа: ${raw.days ?? "—"}`,
-    `Заметка монтажника: ${raw.note || "—"}`
+    `Заметка менеджера перед монтажом: ${raw.note || "—"}`,
+    `Работы монтажника (из счёта, без цен):\n${raw.works || "—"}`,
+    ...(/под ключ/i.test(raw.service) || !raw.service ? ["Всегда входит в монтаж под ключ: настройка записи на регистратор, удалённый доступ с телефона, обучение клиента"] : []),
+    `История от руководителя: ${story || "—"}`
   ].join("\n");
   return gpt(`Данные объекта:\n${data}\n\nНапиши кейс в формате JSON:\n${SCHEMA}`).then(c => clean(c, raw));
 }
 
-const rewriteCase = (d, wish) => gpt(`Вот кейс в JSON:\n${JSON.stringify(caseFields(d.case), null, 1)}\n\nПерепиши его по просьбе: «${wish}». ` +
-  `Цифры и факты не меняй, новых не придумывай. Верни JSON в той же форме:\n${SCHEMA}`).then(c => clean(c, { ...d.raw, cams: d.case.nums[0], cable: d.case.nums[1], days: d.case.nums[2] }));
-const caseFields = c => ({ addr: c.addr, title: c.title, lead: c.lead, task: c.task, done: c.done });
+const rewriteCase = (d, wish) => gpt(`Вот кейс в JSON:\n${JSON.stringify(caseFields(d.case), null, 1)}\n` +
+  (d.story ? `История от руководителя: ${d.story}\n` : "") + `\nПерепиши его по просьбе: «${wish}». ` +
+  `Цифры и факты не меняй, новых не придумывай. Верни JSON в той же форме:\n${SCHEMA}`)
+  .then(c => clean(c, { ...d.raw, cams: d.case.nums[0], cable: d.case.nums[1], days: d.case.nums[2], works: (d.case.works || []).join("\n"), timeline: d.case.timeline || [] }));
+const caseFields = c => ({ addr: c.addr, title: c.title, lead: c.lead, task: c.task, done: c.done, result: c.result });
 
 /* ---------- MAX ---------- */
 const MAX_API = "https://platform-api2.max.ru";
@@ -266,9 +304,15 @@ function draftText(d) {
     `Тип: ${esc(c.type)} · Город: ${esc(c.city)}`,
     ...FIELDS.map(([label, k]) => `${label}: ${esc(Array.isArray(c[k]) ? c[k].join(" ") : c[k]) || "—"}`),
     "Сделали:", ...c.done.map(s => `- ${esc(s)}`),
-    ...NUMS.map(([label, i]) => `${label}: ${c.nums[i] ?? "—"}`), "",
+    ...(c.result?.length ? ["Что изменилось:", ...c.result.map(s => `- ${esc(s)}`)] : []),
+    ...NUMS.map(([label, i]) => `${label}: ${c.nums[i] ?? "—"}`),
+    `<i>Из CRM на страницу:</i> ${c.timeline?.length ? `ход работ (${c.timeline.map(t => `${esc(t.title.toLowerCase())} ${esc(t.date)}`).join(" · ")})` : "дат нет"}` +
+      `${c.works?.length ? ` · работ по счёту: ${c.works.length}` : ""}`, "",
+    d.story ? "✍️ История учтена." : "✍️ <b>Для подробной страницы</b> ответьте: <code>история:</code> с чем пришёл клиент · что было особенного на объекте · что изменилось. Можно надиктовать голосом → текстом.",
+    "",
     "<i>Правки — ответом на это сообщение:</i>",
-    "• <code>убрать 3 7</code> · <code>вернуть 3</code> · <code>обложка 5</code>",
+    "• <code>оставить 2, 4, 7</code> · <code>обложка 4</code> · <code>убрать 3</code> · <code>вернуть 3</code>",
+    "  (номер фото — в углу, когда откроете фото; можно несколько строк в одном сообщении)",
     "• весь текст с «Заголовок:», «Сделали:»… — заменю целиком",
     "• пожелание («короче», «добавь, что работали ночью») — перепишу",
     "⚠️ Проверьте фото: нет ли лиц, номеров машин и схемы слепых зон."
@@ -282,31 +326,41 @@ function draftButtons(d) {
     ? [[btn("✅ Опубликовать", `pub:${L}`), btn("✖️ Отклонить", `rej:${L}`)], [btn("🔄 Собрать заново", `redo:${L}`)]]
     : [[btn("✅ Опубликовать без фото", `pub:${L}`), btn("⏳ Ждать фото", `wait:${L}`)], [btn("✖️ Отклонить", `rej:${L}`), btn("🔄 Собрать заново", `redo:${L}`)]];
 }
-const sendDraft = d => say(draftText(d), { lead: d.lead, buttons: draftButtons(d) });
+const dropMessage = mid => mid && max(`/messages?message_id=${encodeURIComponent(mid)}`, undefined, "DELETE").catch(e => console.warn(e.message));
+// Текст черновика с кнопками; прежний текст этого черновика удаляем — в группе всегда один живой черновик. Сохранить d — дело вызывающего.
+async function sendDraft(d) {
+  if (d.summary) await dropMessage(d.summary);
+  d.summary = await say(draftText(d), { lead: d.lead, buttons: draftButtons(d) });
+  d.mids = [...(d.mids || []), d.summary].filter(Boolean);
+}
 
 // Текст, скопированный из черновика и исправленный: берём поля, которые узнали; остальное оставляем
+const LISTS = [["Сделали", "done"], ["Что изменилось", "result"]];
 function parseFull(text, c) {
   if (!/(^|\n)\s*Заголовок\s*:/i.test(text)) return null;
   const out = { ...c, nums: [...c.nums] };
-  let inDone = false, done = [];
+  const lists = {};
+  let list = null;
   for (const raw of text.split("\n")) {
     const line = raw.trim();
     const m = line.match(/^([А-Яа-яЁё ,]+?)\s*:\s*(.*)$/);
     const f = m && FIELDS.find(([label]) => label.toLowerCase() === m[1].toLowerCase());
     const n = m && NUMS.find(([label]) => label.toLowerCase() === m[1].toLowerCase());
-    if (m && /^сделали$/i.test(m[1])) { inDone = true; if (m[2]) done.push(m[2]); continue; }
-    if (f || n) inDone = false;
+    const l = m && LISTS.find(([label]) => label.toLowerCase() === m[1].toLowerCase());
+    if (l) { list = l[1]; lists[list] = m[2] ? [m[2]] : []; continue; }
+    if (f || n) list = null;
     if (f) out[f[1]] = f[1] === "task" ? (m[2] ? [m[2]] : []) : m[2];
     else if (n) out.nums[n[1]] = num(m[2]);
-    else if (inDone && /^[-•—*]\s*/.test(line)) done.push(line.replace(/^[-•—*]\s*/, ""));
+    else if (list && /^[-•—*]\s*/.test(line)) lists[list].push(line.replace(/^[-•—*]\s*/, ""));
   }
-  if (done.length) out.done = done;
+  Object.assign(out, lists);
   return out;
 }
 
 /* ---------- Сборка черновика ---------- */
 async function buildDraft(leadId, { update = false } = {}) {
   const raw = await readLead(leadId);
+  const old = await getJson(`drafts/${leadId}.json`);
   const published = await getJson(`published/${leadId}.json`);
   const photos = await listPhotos(raw.folder).catch(e => { console.error(e); return []; });
   const d = {
@@ -336,8 +390,11 @@ async function buildDraft(leadId, { update = false } = {}) {
   for (let i = 0; i < previews.length; i += 10) {
     const chunk = previews.slice(i, i + 10).filter(Boolean);
     const images = await pool(chunk, 3, buf => uploadImage(buf));
-    await say(`Фото ${i + 1}–${i + chunk.length} · сделка №${leadId}`, { lead: leadId, images });
+    d.mids.push(await say(`Фото ${i + 1}–${i + chunk.length} · сделка №${leadId}`, { lead: leadId, images }));
   }
+  await putJson(`drafts/${leadId}.json`, d);
+  // Прежний черновик этой сделки (и «Собираю заново…») убираем из группы; сообщения об опубликованном кейсе не трогаем
+  if (old && !["published", "publishing"].includes(old.status)) for (const m of old.mids || []) await dropMessage(m);
 }
 
 /* ---------- Публикация: один коммит в GitHub ---------- */
@@ -401,6 +458,7 @@ async function publish(leadId) {
   }
 
   const url = SITE_URL + entry.url;
+  await dropMessage(d.summary);                     // «⏳ Публикую…» больше не нужно — ниже придёт «✅ опубликован»
   Object.assign(d, { status: "published", slug, published: new Date().toISOString() });
   await putJson(`drafts/${leadId}.json`, d);
   await putJson(`published/${leadId}.json`, { slug, url });
@@ -411,32 +469,47 @@ async function publish(leadId) {
 }
 
 /* ---------- Кнопки и ответы из MAX ---------- */
-async function onCallback(cb) {
+// Ответ на нажатие: всплывающая строка, а сообщение с кнопками заменяется текстом — видно, что нажатие сработало
+async function answer(cb, msg, note, text, buttons) {
+  const message = text ? { text, format: "html", attachments: buttons ? [{ type: "inline_keyboard", payload: { buttons } }] : [] } : undefined;
+  try { await max(`/answers?callback_id=${encodeURIComponent(cb.callback_id)}`, { notification: note, ...(message ? { message } : {}) }); }
+  catch (e) {
+    console.warn(e.message);
+    const mid = msg?.body?.mid;
+    if (message && mid) await max(`/messages?message_id=${encodeURIComponent(mid)}`, message, "PUT").catch(e2 => console.warn(e2.message));
+  }
+}
+
+async function onCallback(cb, msg) {
   const [action, id] = String(cb.payload || "").split(":");
   const lead = Number(id);
   const d = lead && await getJson(`drafts/${lead}.json`);
-  let note = "Готово";
-  if (!d) note = "Черновик не найден";
-  else if (action === "redo") { await queue("build", lead); note = "Собираю заново — пришлю через 1–2 минуты"; }
-  else if (d.status !== "draft") note = { publishing: "Уже публикую", published: "Уже опубликовано", rejected: "Черновик отклонён — нажмите «Собрать заново»", waiting: "Жду фото" }[d.status] || "Уже обработано";
-  else if (action === "pub") {
+  const redo = [[btn("🔄 Собрать заново", `redo:${lead}`)]];
+  if (!d) return answer(cb, msg, "Черновик не найден");
+  if (action === "redo") {
+    await queue("build", lead);
+    return answer(cb, msg, "Собираю заново", `🔄 Собираю заново черновик по сделке №${lead} — пришлю через 1–2 минуты.`);
+  }
+  if (d.status !== "draft")
+    return answer(cb, msg, { publishing: "Уже публикую", published: "Уже опубликовано", rejected: "Черновик отклонён — нажмите «Собрать заново»", waiting: "Жду фото" }[d.status] || "Уже обработано");
+  if (action === "pub") {
     d.status = "publishing";
     await putJson(`drafts/${lead}.json`, d);
     await queue("publish", lead);
-    note = "Публикую — займёт около минуты";
-  } else if (action === "rej") {
+    return answer(cb, msg, "Публикую", `⏳ Публикую кейс по сделке №${lead} — около минуты.`);
+  }
+  if (action === "rej") {
     d.status = "rejected";
     await putJson(`drafts/${lead}.json`, d);
-    await say(`✖️ Черновик по сделке №${lead} отклонён. Собрать заново — кнопка «Собрать заново».`, { lead });
-    note = "Отклонено";
-  } else if (action === "wait") {
+    return answer(cb, msg, "Отклонено", `✖️ Черновик по сделке №${lead} отклонён.`, redo);
+  }
+  if (action === "wait") {
     d.status = "waiting";
     await putJson(`drafts/${lead}.json`, d);
     await putJson(`waiting/${lead}.json`, { until: Date.now() + WAIT_DAYS * 864e5, last: Date.now() });
-    await say(`⏳ Жду фото по сделке №${lead}: ${WAIT_DAYS} дней раз в день проверяю папку. Появятся — пришлю новый черновик.`, { lead });
-    note = "Жду фото";
+    return answer(cb, msg, "Жду фото", `⏳ Жду фото по сделке №${lead}: ${WAIT_DAYS} дней раз в день проверяю папку. Появятся — пришлю новый черновик.`, redo);
   }
-  await max(`/answers?callback_id=${encodeURIComponent(cb.callback_id)}`, { notification: note }).catch(e => console.warn(e.message));
+  return answer(cb, msg, "Готово");
 }
 
 async function onReply(msg) {
@@ -449,11 +522,23 @@ async function onReply(msg) {
   const mid = msg.body?.mid;
   if (!d || d.status !== "draft") return say("Этот черновик уже не редактируется: он опубликован, отклонён или ждёт фото.", { reply: mid });
 
-  const nums = (text.match(/\d+/g) || []).map(Number).filter(n => d.photos.some(p => p.n === n));
-  if (/^убра/i.test(text)) d.off = [...new Set([...d.off, ...nums])];
-  else if (/^верн/i.test(text)) d.off = d.off.filter(n => !nums.includes(n));
-  else if (/^обложк/i.test(text) && nums.length) { d.cover = nums[0]; d.off = d.off.filter(n => n !== d.cover); }
-  else {
+  // Команды про фото — каждая строка отдельно: «оставить 2, 4, 7» и «обложка 4» можно одним сообщением
+  const lines = text.split("\n").map(l => l.trim()).filter(Boolean);
+  if (lines.every(l => /^(убра|верн|остав|обложк)/i.test(l))) {
+    for (const l of lines) {
+      const nums = (l.match(/\d+/g) || []).map(Number).filter(n => d.photos.some(p => p.n === n));
+      if (/^убра/i.test(l)) d.off = [...new Set([...d.off, ...nums])];
+      else if (/^верн/i.test(l)) d.off = d.off.filter(n => !nums.includes(n));
+      else if (/^остав/i.test(l) && nums.length) {
+        d.off = d.photos.map(p => p.n).filter(n => !nums.includes(n));
+        if (!nums.includes(d.cover)) d.cover = nums[0];
+      } else if (/^обложк/i.test(l) && nums.length) { d.cover = nums[0]; d.off = d.off.filter(n => n !== d.cover); }
+    }
+  } else if (/^истори/i.test(text)) {
+    d.story = text.replace(/^истори[яю]\s*[:\-—]?\s*/i, "").slice(0, 1500);
+    try { d.case = { ...(await writeCase({ ...d.raw, cams: d.case.nums[0], cable: d.case.nums[1], days: d.case.nums[2] }, d.story)), addr: d.case.addr }; }
+    catch (e) { console.error(e); return say(`Не получилось переписать: ${esc(e.message)}`, { reply: mid }); }
+  } else {
     const full = parseFull(text, d.case);
     if (full) d.case = full;
     else {
@@ -462,8 +547,8 @@ async function onReply(msg) {
     }
   }
   if (d.off.includes(d.cover)) d.cover = used(d)[0]?.n || 1;
-  await putJson(`drafts/${d.lead}.json`, d);
   await sendDraft(d);
+  await putJson(`drafts/${d.lead}.json`, d);
 }
 
 /* ---------- Таймер: задания из очереди и проверка «ждём фото» ---------- */
@@ -485,7 +570,7 @@ async function worker() {
       }
       await say(`⚠️ Не получилось ${job.kind === "publish" ? "опубликовать" : "собрать"} кейс по сделке №${job.lead}: ${esc(e.message)}\n` +
         (job.kind === "publish" ? "Черновик на месте — можно нажать «Опубликовать» ещё раз." : "Можно нажать «Собрать заново» позже."),
-        { lead: job.lead, buttons: [[btn("🔄 Собрать заново", `redo:${job.lead}`)]] }).catch(() => {});
+        { lead: job.lead, buttons: [...(job.kind === "publish" ? [[btn("✅ Опубликовать ещё раз", `pub:${job.lead}`)]] : []), [btn("🔄 Собрать заново", `redo:${job.lead}`)]] }).catch(() => {});
     }
   }
   // Раз в сутки: не появились ли фото у тех, кого ждём
@@ -563,7 +648,7 @@ module.exports.handler = async (event, context) => {
     try { u = JSON.parse(body); } catch {}
     const chat = String(u.message?.recipient?.chat_id ?? "");
     try {
-      if (u.update_type === "message_callback") await onCallback(u.callback);
+      if (u.update_type === "message_callback") await onCallback(u.callback, u.message);
       else if (u.update_type === "message_created" && !u.message?.sender?.is_bot && chat === env("MAX_CHAT_ID")) await onReply(u.message);
     } catch (e) { console.error(e); }
     return text200();

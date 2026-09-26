@@ -1827,7 +1827,7 @@ async function loadCases(){
         <p class="case-type">${ph(c.type)}</p>
         <p class="case-addr">${ph(c.addr)}</p>
         <h3>${ph(c.title)}</h3>
-        ${c.done?.length ? `<ul class="case-done">${c.done.map(d => `<li><svg width="20" height="20"><use href="#i-check"/></svg>${ph(d)}</li>`).join("")}</ul>` : ""}
+        ${c.done?.length ? `<ul class="case-done">${c.done.slice(0, 3).map(d => `<li><svg width="20" height="20"><use href="#i-check"/></svg>${ph(d)}</li>`).join("")}</ul>` : ""}
         <div class="case-big-nums">${LABELS.map((l, k) => `<div><b>${num(c.nums?.[k])}</b><span>${l}</span></div>`).join("")}</div>
         <div class="case-actions">
           <a href="#final" class="btn btn-accent" data-modal="case" data-from="case" data-case="${esc(label(c))}">Хочу так же</a>
