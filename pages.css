@@ -257,6 +257,47 @@ h3{font-size:20px;font-weight:700;line-height:1.25;letter-spacing:-.015em}
 .lead-inline{display:flex;flex-wrap:wrap;gap:12px}
 .lead-inline .field{flex:1 1 220px}
 
+/* ---------- Отраслевые страницы (sklady.html и др.) ---------- */
+.hero .crumbs{margin-bottom:-6px}
+.ticks-1{grid-template-columns:1fr;margin-top:24px;gap:10px}
+.hero-card{display:block;padding:26px 26px 24px;background:radial-gradient(90% 80% at 100% 0%,rgba(224,138,30,.2),transparent 60%),var(--surface);transition:border-color .15s}
+.hero-card:hover{border-color:var(--accent)}
+.hero-card h3{margin-top:10px;font-size:22px}
+.hero-card p{margin-top:8px;color:var(--muted);font-size:15px}
+.more-link{display:inline-block;margin-top:16px;font-size:15px;font-weight:600;color:var(--accent-hi)}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:40px}
+.grid3 .card{padding:26px 24px 24px}
+.grid3 p,.card-p{margin-top:10px;color:var(--muted);font-size:15px}
+.two .card-p{font-size:16px}
+.card-accent{background:radial-gradient(90% 80% at 100% 0%,rgba(224,138,30,.16),transparent 60%),var(--surface);border-color:rgba(224,138,30,.35)}
+.kit-zones td:last-child,.kit-zones th:last-child{text-align:left;white-space:normal}
+.kit-zones td:first-child{width:36%;font-weight:600;color:var(--text)}
+.note{display:flex;align-items:center;justify-content:space-between;gap:20px 28px;margin-top:14px;padding:24px 28px}
+.note b{font-size:19px}
+.note p{margin-top:6px;color:var(--muted);font-size:15px}
+.note .btn{flex:none}
+.shot-video{aspect-ratio:9/16;max-height:640px;background:#000}
+.shot-video::before{display:none}
+.shot-video video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.kfacts-3{grid-template-columns:repeat(3,1fr);margin-top:0}
+.story-text p{margin-top:16px;color:var(--soft);font-size:17px;max-width:36em}
+.story-text b{color:var(--text)}
+.obj-btn{margin-top:24px}
+.review-top{align-items:start;grid-template-columns:minmax(0,.62fr) minmax(0,1.38fr)}
+@media (max-width:980px){
+  .grid3{grid-template-columns:repeat(2,1fr)}
+}
+@media (max-width:720px){
+  .grid3{grid-template-columns:1fr;gap:10px}
+  .note{flex-direction:column;align-items:stretch}
+  .kit-zones td:first-child{width:auto}
+  .kit-zones tr{display:grid}
+  .kit-zones thead{display:none}
+  .kit.kit-zones td{border-bottom:0;padding-bottom:4px}
+  .kit.kit-zones td:last-child{padding-top:0;padding-bottom:14px;border-bottom:1px solid var(--line);color:var(--muted)}
+  .shot-video{max-height:560px}
+  .kfacts.kfacts-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
 @media (max-width:980px){
   .hero-grid,.calc,.form-card{grid-template-columns:1fr}
   .calc-out{border-left:0;border-top:1px solid rgba(224,138,30,.25)}

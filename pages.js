@@ -79,7 +79,7 @@ $$("[data-phone]").forEach(inp => {
   inp.addEventListener("blur", () => { if (!digitsOf(inp.value).length) inp.value = ""; });
 });
 
-/* ---------- Формы: data-kind="lead" (страница кейса) | "partner" | "job" ---------- */
+/* ---------- Формы: data-kind="lead" (страница кейса или отрасли) | "partner" | "job" ---------- */
 // Поле-ловушка для спам-ботов: людям не видно, боты заполняют — такие заявки функция молча отбрасывает
 $$("form[data-kind]").forEach(f => f.insertAdjacentHTML("beforeend",
   '<input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0">'));
@@ -121,7 +121,7 @@ $$("form[data-kind]").forEach(form => {
       return;
     }
     goal(GOALS[kind], kind === "lead" ? { form: payload.source, channel: "call" } : undefined);
-    if (kind === "lead") goal("lead_case");
+    if (kind === "lead") goal(form.dataset.case ? "lead_case" : "lead_industry", { form: payload.source });
     form.innerHTML = `<div class="done" role="status"><svg width="28" height="28"><use href="#i-ok"/></svg><div><b>${form.dataset.doneTitle}</b><p>${form.dataset.doneText}</p></div></div>`;
   });
 });
