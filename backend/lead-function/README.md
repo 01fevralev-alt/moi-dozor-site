@@ -14,7 +14,7 @@
 | `TG_CHAT_ID` | `-5236379545` |
 | `AMO_DOMAIN` | `01fevralev.amocrm.ru` |
 | `AMO_TOKEN` | долгосрочный токен интеграции amoCRM |
-| `AMO_STATUS` | `НОВЫЙ ЛИД реклама` — этап основной воронки, куда ставить заявки |
+| `AMO_STATUS` | `НОВЫЙ ЛИД` — этап основной воронки, куда ставить заявки |
 | `AMO_PIPELINE` | необязательно: название другой воронки (без него — основная) |
 | `ALLOWED_ORIGINS` | `https://xn--d1agelkcbq.xn--p1ai,https://01fevralev-alt.github.io` |
 
