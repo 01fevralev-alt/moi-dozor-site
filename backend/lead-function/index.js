@@ -1,10 +1,14 @@
 // Приём заявок с сайта «Мой Дозор»: Яндекс Облако → Cloud Functions, среда Node.js 18+.
-// Заявка создаётся сделкой в amoCRM и дублируется в Telegram-группу.
-// Если amoCRM недоступна, заявка всё равно приходит в Telegram с пометкой.
+// Заявка создаётся сделкой в amoCRM, уведомление уходит в группу MAX (и/или Telegram).
+// Если amoCRM недоступна, уведомление всё равно приходит, с пометкой «внесите вручную».
 //
-// Переменные окружения (задаются в настройках функции, в код не вписывать):
-//   TG_TOKEN         токен бота от @BotFather
-//   TG_CHAT_ID       номер группы, например -5236379545
+// Переменные окружения (задаются в настройках функции, в код не вписывать).
+// Уведомление уходит в те мессенджеры, у которых заданы обе переменные; остальные пропускаются.
+//   MAX_TOKEN        токен бота MAX (business.max.ru → Чат-боты → бот → Интеграция)
+//   MAX_CHAT_ID      номер группы MAX; пусто — функция при заявке пишет в лог группы, где состоит бот
+//   TG_TOKEN         токен бота от @BotFather. Из Яндекс Облака Telegram недоступен (проверено 26.09.2026) —
+//   TG_CHAT_ID       номер группы, например -5236379545. Нужен посредник за рубежом, иначе не задавать
+//   TG_API           необязательно: адрес посредника вместо https://api.telegram.org
 //   AMO_DOMAIN       адрес CRM, например moidozor.amocrm.ru
 //   AMO_TOKEN        долгосрочный токен интеграции amoCRM
 //   AMO_PIPELINE     необязательно: название воронки (без него — главная воронка)
@@ -20,6 +24,8 @@ const SOURCES = {
 };
 
 const env = name => (process.env[name] || "").trim();
+// Внешний сервис не ответил за это время — не держим посетителя сайта, идём дальше
+const timeout = ms => AbortSignal.timeout(ms);
 const clip = (v, n) => String(v ?? "").trim().slice(0, n);
 const esc = s => s.replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
 
@@ -49,7 +55,8 @@ const amoDomain = () => env("AMO_DOMAIN").replace(/^https?:\/\//, "").replace(/\
 const amoApi = (path, body) => fetch(`https://${amoDomain()}${path}`, {
   method: body ? "POST" : "GET",
   headers: { Authorization: `Bearer ${env("AMO_TOKEN")}`, "Content-Type": "application/json" },
-  body: body ? JSON.stringify(body) : undefined
+  body: body ? JSON.stringify(body) : undefined,
+  signal: timeout(8000)
 }).then(async r => {
   const text = await r.text();
   if (!r.ok) throw new Error(`amoCRM ${r.status}: ${text.slice(0, 300)}`);
@@ -106,11 +113,43 @@ async function toAmo(lead) {
   return id;
 }
 
+const MAX_API = "https://platform-api2.max.ru";
+const maxApi = (path, body) => fetch(MAX_API + path, {
+  method: body ? "POST" : "GET",
+  headers: { Authorization: env("MAX_TOKEN"), "Content-Type": "application/json" },
+  body: body ? JSON.stringify(body) : undefined,
+  signal: timeout(5000)
+}).then(async r => {
+  const text = await r.text();
+  if (!r.ok) throw new Error(`MAX ${r.status}: ${text.slice(0, 300)}`);
+  return text ? JSON.parse(text) : {};
+});
+
+async function toMax(html) {
+  await maxApi(`/messages?chat_id=${encodeURIComponent(env("MAX_CHAT_ID"))}&disable_link_preview=true`, { text: html, format: "html" });
+}
+
+// Помогает узнать номер группы MAX: пишет в лог все группы, где состоит бот
+async function logMaxChats() {
+  const found = new Map();
+  await maxApi("/chats").then(d => (d.chats || []).forEach(c => found.set(c.chat_id, c.title))).catch(() => {});
+  await maxApi("/updates?limit=100&timeout=0").then(d => (d.updates || []).forEach(u => {
+    const r = u.message?.recipient || {};
+    if (r.chat_id && r.chat_type !== "dialog") found.set(r.chat_id, u.chat?.title || found.get(r.chat_id) || "группа");
+    if (u.chat_id) found.set(u.chat_id, u.chat?.title || found.get(u.chat_id) || "группа");
+  })).catch(e => console.warn(e.message));
+  console.warn(found.size
+    ? `MAX_CHAT_ID не задан. Бот состоит в группах: ${[...found].map(([id, t]) => `«${t}» = ${id}`).join("; ")}`
+    : "MAX_CHAT_ID не задан, а групп бот не видит: добавьте бота в группу, напишите там сообщение и отправьте заявку ещё раз");
+}
+
 async function toTelegram(html) {
-  const send = chat_id => fetch(`https://api.telegram.org/bot${env("TG_TOKEN")}/sendMessage`, {
+  const base = (env("TG_API") || "https://api.telegram.org").replace(/\/$/, "");
+  const send = chat_id => fetch(`${base}/bot${env("TG_TOKEN")}/sendMessage`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ chat_id, text: html, parse_mode: "HTML", disable_web_page_preview: true })
+    body: JSON.stringify({ chat_id, text: html, parse_mode: "HTML", disable_web_page_preview: true }),
+    signal: timeout(5000)
   }).then(r => r.json());
 
   let res = await send(env("TG_CHAT_ID"));
@@ -170,9 +209,13 @@ module.exports.handler = async event => {
   if (amoLine) lines.push(``, amoLine);
   const msg = lines.join("\n");
 
-  let tgError = null;
-  try { await toTelegram(msg); } catch (e) { tgError = e.message; console.error(e); }
+  const notifiers = [];
+  if (env("MAX_TOKEN") && env("MAX_CHAT_ID")) notifiers.push(toMax(msg));
+  else if (env("MAX_TOKEN")) await logMaxChats();
+  if (env("TG_TOKEN") && env("TG_CHAT_ID")) notifiers.push(toTelegram(msg));
+  const results = await Promise.allSettled(notifiers);
+  results.filter(r => r.status === "rejected").forEach(r => console.error(r.reason));
 
-  const delivered = Boolean(amoId) || !tgError;
+  const delivered = Boolean(amoId) || results.some(r => r.status === "fulfilled");
   return reply(delivered ? 200 : 502, headers, { ok: delivered });
 };
