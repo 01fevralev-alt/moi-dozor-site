@@ -734,8 +734,14 @@ async function setup(selfUrl) {
       return " — включена";
     })
   ]);
+  // Группы, где состоит бот: номер нужной — в переменную MAX_CHAT_ID (черновики кейсов идут туда)
+  const chats = await max("/chats?count=50").then(r => (r.chats || []).filter(c => c.type !== "dialog")).catch(() => []);
+  const cur = env("MAX_CHAT_ID");
   return [
     "Проверка настроек автокейсов «Мой Дозор»", "", ...lines, "",
+    "Группы MAX, где состоит бот (номер — в переменную MAX_CHAT_ID):",
+    ...(chats.length ? chats.map(c => `${String(c.chat_id) === cur ? "👉" : "  "} «${c.title || "без названия"}» = ${c.chat_id}${String(c.chat_id) === cur ? "  ← сюда сейчас идут черновики кейсов" : ""}`)
+      : ["  не видно ни одной — добавьте бота в группу и напишите там любое сообщение"]), "",
     "Адрес для Webhook в amoCRM (этап «Проверено»):", amoHook, "",
     "Если какая-то строка с ❌ — пришлите этот экран (адреса можно замазать)."
   ].join("\n");
