@@ -447,7 +447,7 @@ h3{font-weight:700;letter-spacing:-.025em;line-height:1.15}
 .case-stage::-webkit-scrollbar{display:none}
 .case-stage>.case-hero{margin-top:0;scroll-snap-align:start}
 .case-ph img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-.case-count{position:absolute;top:14px;right:42px;font-size:12px;font-weight:600;color:rgba(255,255,255,.7);letter-spacing:.04em}
+.case-count{position:absolute;top:14px;right:42px;font-size:12px;font-weight:600;color:rgba(255,255,255,.7);letter-spacing:.04em;text-shadow:0 1px 3px rgba(0,0,0,.7)}
 .cases-track>.case{cursor:pointer;transition:border-color .15s,box-shadow .15s}
 .cases-track>.case:hover{border-color:var(--line-2)}
 .cases-track>.case.is-active{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
@@ -476,7 +476,7 @@ h3{font-weight:700;letter-spacing:-.025em;line-height:1.15}
 .case-ph .vf.tl,.case-ph .vf.bl{left:14px}.case-ph .vf.tr,.case-ph .vf.br{right:14px}
 .case-ph p{position:relative;text-align:center;color:var(--dim);font-size:14px}
 .case-ph p b{display:block;color:var(--muted);font-size:15px}
-.case-cam{position:absolute;top:18px;left:42px;font-size:12px;font-weight:600;color:rgba(255,255,255,.7)}
+.case-cam{position:absolute;top:18px;left:42px;font-size:12px;font-weight:600;color:rgba(255,255,255,.7);text-shadow:0 1px 3px rgba(0,0,0,.7)}
 .case-rev{position:absolute;right:14px;bottom:14px;display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 12px;border-radius:999px;background:rgba(0,0,0,.55);font-size:12px;font-weight:600;border:1px solid var(--line-2)}
 .case-rev i{width:0;height:0;border-left:7px solid var(--accent-hi);border-top:5px solid transparent;border-bottom:5px solid transparent}
 .case-body{padding:22px 22px 24px;display:flex;flex-direction:column;flex:1}
@@ -1814,7 +1814,8 @@ async function loadCases(){
   if (!CASES.length) return;
   const esc = t => String(t ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
   const ph = t => esc(t).replace(/\[([^\]]+)\]/g, '<span class="ph" title="Заглушка">[$1]</span>');
-  const num = v => v === null || v === undefined || v === "" ? '<span class="ph">[N]</span>' : esc(v);
+  // Пустая цифра: у примеров — заглушка [N], у настоящих кейсов (есть slug) — прочерк
+  const num = (v, real) => v === null || v === undefined || v === "" ? (real ? "—" : '<span class="ph">[N]</span>') : esc(v);
   const LABELS = ["камер", "м кабеля", "дня монтажа"];
   const n = CASES.length, pad = i => String(i + 1).padStart(2, "0");
   const photo = (c, i, big) => `<div class="case-ph"><span class="vf tl"></span><span class="vf tr"></span><span class="vf bl"></span><span class="vf br"></span>
@@ -1830,7 +1831,7 @@ async function loadCases(){
         <p class="case-addr">${ph(c.addr)}</p>
         <h3>${ph(c.title)}</h3>
         ${c.done?.length ? `<ul class="case-done">${c.done.slice(0, 3).map(d => `<li><svg width="20" height="20"><use href="#i-check"/></svg>${ph(d)}</li>`).join("")}</ul>` : ""}
-        <div class="case-big-nums">${LABELS.map((l, k) => `<div><b>${num(c.nums?.[k])}</b><span>${l}</span></div>`).join("")}</div>
+        <div class="case-big-nums">${LABELS.map((l, k) => `<div><b>${num(c.nums?.[k], c.slug)}</b><span>${l}</span></div>`).join("")}</div>
         <div class="case-actions">
           <a href="#final" class="btn btn-accent" data-modal="case" data-from="case" data-case="${esc(label(c))}">Хочу так же</a>
           ${c.url ? `<a class="btn btn-ghost" href="${esc(c.url)}"><span>Подробнее<span class="lg-only"> о проекте</span></span> →</a>` : ""}
@@ -1844,7 +1845,7 @@ async function loadCases(){
         <p class="case-type">${ph(c.type)}</p>
         <p class="case-addr">${ph(c.addr)}</p>
         <h3 class="case-t">${ph(c.title)}</h3>
-        <div class="case-nums">${LABELS.map((l, k) => `<div><b>${num(c.nums?.[k])}</b><span>${l}</span></div>`).join("")}</div>
+        <div class="case-nums">${LABELS.map((l, k) => `<div><b>${num(c.nums?.[k], c.slug)}</b><span>${l}</span></div>`).join("")}</div>
         <span class="case-link" aria-hidden="true"><span class="cl-show">Показать ↑</span><span class="cl-now">Сейчас выше</span></span>
       </div>
     </article>`).join("");

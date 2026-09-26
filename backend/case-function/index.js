@@ -193,6 +193,8 @@ const SYSTEM = `Ты пишешь кейсы для сайта «Мой Дозо
 Голос — живая компания, которая рассказывает о своей работе: от «мы», тепло, по-человечески, с конкретикой из жизни клиента.
 Объясняй, зачем клиенту это было нужно и что это даёт ему в быту или в работе: «уезжая на работу, открывает телефон и видит, кто у ворот».
 Без канцелярита и штампов («эффективно», «обеспечить безопасность», «комплексное решение», «позволило»), без восклицаний.
+Исправляй орфографические, пунктуационные и грамматические ошибки во всех исходных текстах: счёт монтажника, заметка менеджера, история руководителя. На сайт — только грамотный текст.
+Пункты списков — без точки в конце.
 
 Факты — строго из данных и истории: не выдумывай цифры, сроки, марки, события и слова клиента. Раскрывать факты можно: объяснить их смысл для клиента.
 Если есть история от руководителя — это главный источник: опирайся на неё.
@@ -215,7 +217,8 @@ const SCHEMA = `{
   "lead": "2 предложения: что сделали и как это помогает клиенту в жизни или работе",
   "task": ["если есть история — 2 абзаца по ней: зачем клиенту понадобилось видеонаблюдение и что было важно на объекте; если истории нет — 1 абзац о типичной задаче для такого объекта, без выдуманных подробностей"],
   "done": ["3–4 обобщённых пункта «что сделали» (камеры, запись, доступ с телефона, обучение); не повторяй дословно работы монтажника — полный перечень выводится на странице отдельно"],
-  "result": ["до 3 живых пунктов «что изменилось для клиента» — только из истории; если истории нет — пустой массив"]
+  "result": ["до 3 живых пунктов «что изменилось для клиента» — только из истории; если истории нет — пустой массив"],
+  "works": ["работы монтажника из счёта в читаемом виде, по одной строке на работу, в том же порядке: исправь опечатки и обрывки фраз («Монтаж 6 камер улица» → «Монтаж 6 уличных камер», «комутатора» → «коммутатора»); ничего не добавляй, не объединяй и не выбрасывай"]
 }`;
 
 async function gpt(user) {
@@ -239,13 +242,20 @@ const clean = (c, raw) => ({
   title: String(c.title || "").trim().slice(0, 90),
   lead: String(c.lead || "").trim(),
   task: (Array.isArray(c.task) ? c.task : [c.task]).map(s => String(s || "").trim()).filter(Boolean).slice(0, 3),
-  done: (Array.isArray(c.done) ? c.done : []).map(s => String(s || "").trim()).filter(Boolean).slice(0, 6),
-  result: (Array.isArray(c.result) ? c.result : []).map(s => String(s || "").trim()).filter(Boolean).slice(0, 4),
+  done: items(c.done, 6),
+  result: items(c.result, 4),
   nums: [raw.cams, raw.cable, raw.days],
-  // Эти два — из CRM как есть, без нейросети
-  works: String(raw.works || "").split("\n").map(s => s.trim().replace(/[.;,]+$/, "")).filter(Boolean).slice(0, 15),
-  timeline: raw.timeline || []
+  works: works(c.works, raw.works),
+  timeline: raw.timeline || []   // хронология — из дат сделки, без нейросети
 });
+// Пункт списка: без точки и точки с запятой в конце
+const items = (list, max) => (Array.isArray(list) ? list : []).map(s => String(s || "").trim().replace(/[.;,]+$/, "")).filter(Boolean).slice(0, max);
+// Работы: исправленные нейросетью, если она не потеряла и не добавила строки; иначе — как в счёте
+function works(fixed, bill) {
+  const orig = items(String(bill || "").split("\n"), 15);
+  const got = items(fixed, 15);
+  return got.length && Math.abs(got.length - orig.length) <= 1 ? got : orig;
+}
 
 function writeCase(raw, story = "") {
   const data = [
@@ -264,7 +274,7 @@ const rewriteCase = (d, wish) => gpt(`Вот кейс в JSON:\n${JSON.stringify
   (d.story ? `История от руководителя: ${d.story}\n` : "") + `\nПерепиши его по просьбе: «${wish}». ` +
   `Цифры и факты не меняй, новых не придумывай. Верни JSON в той же форме:\n${SCHEMA}`)
   .then(c => clean(c, { ...d.raw, cams: d.case.nums[0], cable: d.case.nums[1], days: d.case.nums[2], works: (d.case.works || []).join("\n"), timeline: d.case.timeline || [] }));
-const caseFields = c => ({ addr: c.addr, title: c.title, lead: c.lead, task: c.task, done: c.done, result: c.result });
+const caseFields = c => ({ addr: c.addr, title: c.title, lead: c.lead, task: c.task, done: c.done, result: c.result, works: c.works });
 
 /* ---------- MAX ---------- */
 const MAX_API = "https://platform-api2.max.ru";

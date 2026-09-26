@@ -197,8 +197,8 @@ h3{font-size:20px;font-weight:700;line-height:1.25;letter-spacing:-.015em}
 .shot .vf.tr{top:14px;right:14px;border-top-width:2px;border-right-width:2px}
 .shot .vf.bl{bottom:14px;left:14px;border-bottom-width:2px;border-left-width:2px}
 .shot .vf.br{bottom:14px;right:14px;border-bottom-width:2px;border-right-width:2px}
-.shot-cam{position:absolute;top:16px;left:42px;font-size:12px;font-weight:600;color:rgba(255,255,255,.7);letter-spacing:.04em}
-.shot-rec{position:absolute;top:16px;right:42px;display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:rgba(255,255,255,.75)}
+.shot-cam{position:absolute;top:16px;left:42px;font-size:12px;font-weight:600;color:rgba(255,255,255,.7);letter-spacing:.04em;text-shadow:0 1px 3px rgba(0,0,0,.7)}
+.shot-rec{position:absolute;top:16px;right:42px;display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:rgba(255,255,255,.75);text-shadow:0 1px 3px rgba(0,0,0,.7)}
 .shot-rec i{width:7px;height:7px;border-radius:50%;background:var(--rec)}
 .shot p{position:relative;text-align:center;color:var(--dim);font-size:14px;padding:0 24px}
 .shot p b{display:block;color:var(--muted);font-size:15px}
