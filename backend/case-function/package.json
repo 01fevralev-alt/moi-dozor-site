@@ -1,0 +1,8 @@
+{
+  "name": "moidozor-case",
+  "private": true,
+  "description": "Автокейсы «Мой Дозор»: amoCRM → черновик в MAX → кейс на сайте",
+  "dependencies": {
+    "sharp": "0.33.5"
+  }
+}
