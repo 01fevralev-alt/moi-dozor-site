@@ -1,3 +1,5 @@
+// Сайт работает только по https: http и www переадресуем на основной адрес
+if (location.protocol === "http:" && !/^(localhost|127\.|192\.168\.)/.test(location.hostname)) location.replace("https://" + location.host.replace(/^www\./, "") + location.pathname + location.search + location.hash);
 /* Подстраницы (partner.html, jobs.html, cases/*.html): Метрика, плашка cookie, маска телефона, отправка формы.
    Всё по образцу index.html; адрес функции и счётчик — те же. */
 // Корень сайта — от адреса этого скрипта: страницы лежат и в корне, и в cases/
