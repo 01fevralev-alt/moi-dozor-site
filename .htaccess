@@ -5,15 +5,14 @@ DirectoryIndex index.html
 
 <IfModule mod_rewrite.c>
 RewriteEngine On
-# www → без www
+# www → без www, сразу на https
 RewriteCond %{HTTP_HOST} ^www\.(.+)$ [NC]
-RewriteCond %{HTTPS} on
 RewriteRule ^ https://%1%{REQUEST_URI} [R=301,L]
-RewriteCond %{HTTP_HOST} ^www\.(.+)$ [NC]
-RewriteRule ^ http://%1%{REQUEST_URI} [R=301,L]
-# http → https: ВКЛЮЧИТЬ после выпуска сертификата (убрать # у двух строк ниже)
-# RewriteCond %{HTTPS} off
-# RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
+# http → https (сертификат Let's Encrypt выпущен в ISPmanager 29.09.2026, продлевается сам)
+RewriteCond %{HTTPS} off
+RewriteCond %{HTTP:X-Forwarded-Proto} !https
+RewriteCond %{REQUEST_URI} !^/\.well-known/
+RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
 # Служебные папки и файл состояния выгрузки — не отдавать
 RewriteRule ^(\.ftp-deploy-sync-state\.json|backend|tools|backup|data|video)(/|$) - [F,L]
 </IfModule>
