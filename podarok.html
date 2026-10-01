@@ -73,9 +73,13 @@ button{cursor:pointer;background:none;border:0}
 .rating svg{color:var(--accent-hi)}
 .rating b{font-weight:700;color:var(--text)}
 
-h1{margin-top:18px;font-size:clamp(27px,7.2vw,48px);line-height:1.1;font-weight:800;letter-spacing:-.015em}
+h1{margin-top:18px;font-size:clamp(24px,6.2vw,40px);line-height:1.1;font-weight:800;letter-spacing:-.015em}
 .hook{margin-top:10px;font-size:clamp(19px,5vw,26px);line-height:1.25;font-weight:700;color:var(--accent-hi)}
 .sub{margin-top:10px;font-size:clamp(15px,4vw,18px);color:var(--soft)}
+.price-row{display:flex;align-items:center;gap:12px;margin-top:10px}
+.price-row .sub{margin-top:0}
+.gift-pic{position:relative;flex:none;display:grid;place-items:center;width:72px;height:56px;border-radius:12px;background:var(--surface);border:1px solid var(--line-2)}
+.gift-pic img{width:64px;height:auto}
 .old-price{color:var(--text);font-weight:600;text-decoration-thickness:2px;text-decoration-color:var(--accent-hi);white-space:nowrap}
 
 .meter{display:grid;gap:12px;margin-top:18px;padding:14px 16px;border-radius:var(--r);background:rgba(11,15,20,.55);border:1px solid rgba(224,138,30,.38);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
@@ -134,14 +138,32 @@ h1{margin-top:18px;font-size:clamp(27px,7.2vw,48px);line-height:1.1;font-weight:
 .consent{margin-top:6px;max-width:44em}
 
 /* ---------- Готово ---------- */
-.done{margin-top:22px;padding:22px;border-radius:var(--r);background:rgba(16,22,29,.86);border:1px solid rgba(224,138,30,.45)}
+.done{margin-top:22px}
 .done-title{display:flex;gap:12px;align-items:flex-start;font-size:20px;line-height:1.3;font-weight:700}
 .done-title svg{flex:none;color:var(--accent-hi)}
 .done-title .num{color:var(--accent-hi);white-space:nowrap}
 .done p{margin-top:10px;color:var(--soft)}
 .done .btn{margin-top:16px}
 .done .chan{display:inline-block;margin-top:14px;font-size:14px;color:var(--muted);text-decoration:underline;text-underline-offset:2px}
-.done .reels{margin-top:14px}
+.done .reels{margin-top:10px}
+.boost{padding:16px;border-radius:var(--r);background:rgba(224,138,30,.08);border:1px solid rgba(224,138,30,.38)}
+.boost-title{font-size:19px;font-weight:700}
+.boost p{margin-top:4px;color:var(--soft);font-size:15px}
+.boost .msgs{margin-top:12px}
+.boost .msgs{gap:6px}
+.boost .msg{flex:1 1 0;justify-content:center;gap:5px;padding:0 4px;font-size:13.5px}
+.done-label{margin-top:18px;color:var(--soft);font-size:15px}
+.done-links{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:14px;font-size:14px}
+.done-links a{color:var(--muted);text-decoration:underline;text-underline-offset:2px}
+.done-links a:hover{color:var(--text)}
+.is-done .consent{display:none}
+.again{display:inline-flex;align-items:center;min-height:44px;margin-top:4px;font-size:14px;color:var(--accent-hi);text-decoration:underline;text-underline-offset:3px}
+.next{margin-top:22px;padding:16px;border-radius:var(--r);background:rgba(11,15,20,.55);border:1px solid rgba(224,138,30,.38);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.next-title{font-size:15px;font-weight:600;color:var(--soft)}
+.steps{list-style:none;display:grid;gap:12px;margin-top:12px}
+.steps li{display:flex;gap:12px;align-items:flex-start;font-size:16px;line-height:1.35}
+.steps b{flex:none;display:grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--accent);color:#fff;font-weight:700;font-size:15px}
+.steps span{padding-top:4px}
 
 /* ---------- Видео с объектов ---------- */
 .objects{padding:30px 0 36px;border-top:1px solid var(--line)}
@@ -162,7 +184,7 @@ h1{margin-top:18px;font-size:clamp(27px,7.2vw,48px);line-height:1.1;font-weight:
 .reel-play img{width:100%;height:100%;object-fit:cover}
 .reel-btn{position:absolute;left:50%;top:50%;width:52px;height:52px;margin:-26px 0 0 -26px;border-radius:50%;display:grid;place-items:center;background:var(--accent);color:#fff;box-shadow:0 8px 24px rgba(0,0,0,.4)}
 .reel video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#000}
-.reel figcaption{margin-top:8px;font-size:14px;color:var(--soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.reel figcaption{margin-top:8px;font-size:14px;line-height:1.3;color:var(--soft);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 
 .foot{padding:22px 0 30px;border-top:1px solid var(--line);font-size:13px;line-height:1.6;color:var(--dim)}
 .foot a{color:var(--muted)}
@@ -187,9 +209,16 @@ h1{margin-top:18px;font-size:clamp(27px,7.2vw,48px);line-height:1.1;font-weight:
   :root{--gut:40px}
   .hero{padding-bottom:64px}
   .hero::before{height:900px}
-  .hero-grid{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);gap:56px;align-items:center;min-height:calc(100vh - 140px);padding-top:16px}
-  .hero-copy h1{font-size:clamp(40px,3.9vw,56px)}
-  .hook{font-size:26px}
+  .wrap{max-width:1280px}
+  .hero-grid{display:grid;grid-template-columns:minmax(0,1.12fr) minmax(0,.88fr);gap:56px;align-items:center;min-height:calc(100vh - 140px);padding-top:16px}
+  .hero-copy h1{font-size:clamp(34px,3vw,44px)}
+  .hook{font-size:24px}
+  .price-row{gap:20px;margin-top:14px}
+  .gift-pic{order:2;width:190px;height:auto;background:none;border:0}
+  .gift-pic img{width:190px}
+  .gift-pic::after{content:"";position:absolute;z-index:-1;left:8%;right:8%;bottom:-14px;height:34px;border-radius:50%;background:radial-gradient(closest-side,rgba(224,138,30,.5),transparent);filter:blur(6px)}
+  .next{max-width:460px;margin-top:32px;padding:20px 22px}
+  .steps li{font-size:17px}
   .sub{font-size:19px;max-width:30em}
   .meter{max-width:460px;margin-top:32px;padding:20px 22px;gap:16px}
   .m-label{font-size:15px}
@@ -204,7 +233,7 @@ h1{margin-top:18px;font-size:clamp(27px,7.2vw,48px);line-height:1.1;font-weight:
   .hero-form .lead-form .btn{width:100%}
   .hero-form .msgs>span{width:100%}
   .hero-form .msg{flex:1 1 0;justify-content:center}
-  .hero-form .done{margin-top:0;padding:0;background:none;border:0}
+  .hero-form .done{margin-top:0}
   .objects{padding:48px 0 56px}
   .objects h2{font-size:26px}
 }
@@ -244,9 +273,13 @@ h1{margin-top:18px;font-size:clamp(27px,7.2vw,48px);line-height:1.1;font-weight:
 
       <a class="rating" data-yandex-link target="_blank" rel="noopener"><svg width="16" height="16"><use href="#i-star"/></svg><span><b>5,0</b> на Яндекс Картах, <span id="reviews">41 отзыв</span></span></a>
 
+      <div id="offerCopy">
       <h1 id="title">Ещё выбираете, кто установит видеонаблюдение?</h1>
       <p class="hook" id="hook">Мы придержали для вас цифровой (IP) регистратор в&nbsp;подарок</p>
-      <p class="sub" id="sub">Обычная цена <s class="old-price">7&nbsp;250&nbsp;₽</s> — для вас бесплатно при установке от&nbsp;4&nbsp;камер под&nbsp;ключ.</p>
+      <div class="price-row">
+        <span class="gift-pic" id="giftPic"><img src="assets/gift-nvr.webp" alt="Видеорегистратор в подарок" width="480" height="135"></span>
+        <p class="sub" id="sub">Обычная цена <s class="old-price">7&nbsp;250&nbsp;₽</s> — для вас бесплатно при установке от&nbsp;4&nbsp;камер под&nbsp;ключ.</p>
+      </div>
 
       <div class="meter" id="meter">
         <div class="meter-item" id="timerBox">
@@ -260,7 +293,23 @@ h1{margin-top:18px;font-size:clamp(27px,7.2vw,48px);line-height:1.1;font-weight:
         </div>
         <div class="meter-item" id="leftBox">
           <span class="m-label" id="leftText">Осталось подарков</span>
-          <div class="left-row" id="leftRow"><b class="left" id="left">7 из 10</b><span class="gifts" id="gifts" aria-hidden="true"></span></div>
+          <div class="left-row" id="leftRow"><b class="left" id="left">5 из 5</b><span class="gifts" id="gifts" aria-hidden="true"></span></div>
+        </div>
+      </div>
+      </div>
+
+      <!-- Экран после заявки: левая колонка -->
+      <div id="doneCopy" hidden>
+        <h1 id="doneH1">Регистратор закреплён за вами</h1>
+        <p class="hook" id="doneHook"></p>
+        <p class="sub" id="doneSub"></p>
+        <div class="next">
+          <h2 class="next-title">Что дальше</h2>
+          <ol class="steps">
+            <li><b>1</b><span>Инженер посмотрит ваши ответы и посчитает 3 варианта</span></li>
+            <li><b>2</b><span id="stepTime"></span></li>
+            <li><b>3</b><span>Выбираете вариант — подписываем договор и ставим камеры</span></li>
+          </ol>
         </div>
       </div>
 
@@ -310,22 +359,33 @@ h1{margin-top:18px;font-size:clamp(27px,7.2vw,48px);line-height:1.1;font-weight:
       </div>
 
       <div class="done" id="done" role="status" hidden>
-        <p class="done-title"><svg width="28" height="28"><use href="#i-ok"/></svg><span id="doneTitle"></span></p>
-        <p>Смету пришлём в течение 15 минут в рабочее время — ежедневно с 9:00 до 20:00.</p>
-        <p>Пока ждёте — посмотрите объекты, похожие на ваш:</p>
+        <div class="boost">
+          <h2 class="boost-title">Ускорьте смету</h2>
+          <p>Пришлите 2–3 фото объекта или план — смета будет точнее</p>
+          <div class="msgs">
+            <a class="msg" data-photo="max" target="_blank" rel="noopener"><svg width="18" height="18"><use href="#i-max"/></svg>MAX</a>
+            <a class="msg" data-photo="telegram" target="_blank" rel="noopener"><svg width="18" height="18"><use href="#i-tg"/></svg>Telegram</a>
+            <a class="msg" data-photo="whatsapp" target="_blank" rel="noopener"><svg width="18" height="18"><use href="#i-wa"/></svg>WhatsApp</a>
+          </div>
+          <p class="toast" id="toastPhoto" role="status" hidden>Текст скопирован — вставьте его в чат</p>
+        </div>
+        <p class="done-label">Пока ждёте — посмотрите объекты, похожие на ваш:</p>
         <div class="reels-box"><div class="reels" id="doneReels"></div><button class="rarrow prev" type="button" aria-label="Предыдущие видео"><svg width="20" height="20" style="transform:scaleX(-1)"><use href="#i-chev"/></svg></button><button class="rarrow next" type="button" aria-label="Следующие видео"><svg width="20" height="20"><use href="#i-chev"/></svg></button></div>
-        <a class="btn btn-accent" id="maxBot" target="_blank" rel="noopener" hidden>Получать смету и новости в MAX</a>
-        <br><a class="chan" data-tgch-link target="_blank" rel="noopener">Наш канал в Telegram</a>
+        <p class="done-links">
+          <a id="maxBot" target="_blank" rel="noopener" hidden>Получать смету и новости в MAX</a>
+          <a data-tgch-link target="_blank" rel="noopener">Наш канал в Telegram</a>
+        </p>
       </div>
 
       <div class="fine">
         <!-- ПРОВЕРИТЬ У ЮРИСТА: весь текст условий акции -->
         <details class="terms">
           <summary>Условия акции</summary>
-          <p>Подарок — 9-канальный цифровой (IP) видеорегистратор при установке системы видеонаблюдения под ключ от <span id="tMin">4</span> камер (оборудование и монтаж — «Мой Дозор»), если договор заключён в течение 30 дней с даты заявки. Подарок закрепляется за заявкой, оставленной до окончания личного срока на этой странице. Один подарок на договор. Количество ограничено: <span id="tTotal">[N]</span> в месяц.
+          <p>Подарок — 9-канальный цифровой (IP) видеорегистратор при установке системы видеонаблюдения от <span id="tMin">4</span> камер под ключ (оборудование и монтаж — «Мой Дозор»), если договор заключён в течение 30 дней с даты заявки. Подарок закрепляется за заявкой, оставленной до окончания личного срока на этой странице. Один подарок на договор. Количество ограничено: <span id="tTotal">[N]</span> в месяц.
             Организатор: ИП Февралев И. Н., ОГРНИП 316631300090117.</p>
         </details>
         <p class="consent">Нажимая кнопку, вы даёте <a href="consent.html">согласие на обработку персональных данных</a> и соглашаетесь с <a href="policy.html">политикой</a>.</p>
+        <button class="again" type="button" id="again" hidden>Оставить ещё одну заявку</button>
       </div>
       </div>
       </div>
@@ -351,7 +411,7 @@ h1{margin-top:18px;font-size:clamp(27px,7.2vw,48px);line-height:1.1;font-weight:
 <script>
 /* =========================================================
    Настройки страницы. Контакты и адрес функции — как на сайте (index.html → SITE).
-   Акция (подарков осталось, сумма договора и т. п.) — в podarok-config.json.
+   Акция (сколько подарков в месяц, от скольких камер, обычная цена и т. п.) — в podarok-config.json.
    ========================================================= */
 const SITE = {
   phone: "+79057239958",
@@ -367,7 +427,7 @@ const SITE = {
   tzOffset: 4
 };
 // Если файл конфига не загрузился — эти значения (держать такими же, как в podarok-config.json)
-const CONFIG_DEFAULT = { month: "2026-10", gifts_total: 10, gifts_left: 7, min_cameras: 4, gift_price_rub: 7250, reviews_count: 41, max_bot_url: "", active: true };
+const CONFIG_DEFAULT = { month: "2026-10", gifts_total: 5, gifts_reserved: 0, gifts_issued: 0, min_cameras: 4, gift_price_rub: 7250, reviews_count: 41, max_bot_url: "", active: true };
 
 // Видео с объектов. cams — число камер (null — неизвестно, тогда подпись без него). Названия клиентов не писать.
 const VIDEOS = {
@@ -482,10 +542,12 @@ const plural = (n, one, few, many) => {
   const a = n % 10, b = n % 100;
   return a === 1 && b !== 11 ? one : a >= 2 && a <= 4 && (b < 12 || b > 14) ? few : many;
 };
+// Осталось = всего − зарезервировано (ведём вручную) − выдано
+const giftsLeft = () => Math.max(0, (cfg.gifts_total | 0) - (cfg.gifts_reserved | 0) - (cfg.gifts_issued | 0));
 function computeStatus(){
   if (cfg.active === false) return "off";
   if (Date.now() >= personal.deadline) return "expired";
-  if (!(cfg.gifts_left > 0)) return "sold_out";
+  if (!(giftsLeft() > 0)) return "sold_out";
   return "active";
 }
 function render(){
@@ -496,6 +558,7 @@ function render(){
   const price = cfg.gift_price_rub > 0 ? `Обычная цена <s class="old-price">${Number(cfg.gift_price_rub).toLocaleString("ru-RU")}\u00A0₽</s> — для вас бесплатно` : "Бесплатно";
   $("sub").innerHTML = gift ? `${price} при установке от\u00A0${cfg.min_cameras > 0 ? cfg.min_cameras : 4}\u00A0камер под\u00A0ключ.` : "Но смету пришлём, как и раньше.";
   $("sub").hidden = status === "off";
+  $("giftPic").hidden = !gift;
   $("meter").hidden = !(gift || status === "sold_out");
   $("timerBox").hidden = !gift;
   // Счётчик — только если конфиг на текущий месяц
@@ -504,9 +567,9 @@ function render(){
   $("leftRow").hidden = !gift;
   const MONTHS = ["январе","феврале","марте","апреле","мае","июне","июле","августе","сентябре","октябре","ноябре","декабре"];
   $("leftText").textContent = gift ? `Осталось подарков в ${MONTHS[+cfg.month.slice(5, 7) - 1] || "этом месяце"}` : "Подарки на этот месяц закончились";
-  $("left").textContent = `${cfg.gifts_left} из ${cfg.gifts_total}`;
+  $("left").textContent = `${giftsLeft()} из ${cfg.gifts_total}`;
   const total = Math.min(30, Math.max(0, cfg.gifts_total | 0));
-  $("gifts").innerHTML = Array.from({ length: total }, (_, i) => `<i${i < cfg.gifts_left ? ' class="on"' : ""}></i>`).join("");
+  $("gifts").innerHTML = Array.from({ length: total }, (_, i) => `<i${i < giftsLeft() ? ' class="on"' : ""}></i>`).join("");
   $("submitBtn").textContent = gift ? "Закрепить подарок" : "Получить смету";
   $("reviews").textContent = `${cfg.reviews_count} ${plural(cfg.reviews_count, "отзыв", "отзыва", "отзывов")}`;
   $("tMin").textContent = cfg.min_cameras > 0 ? cfg.min_cameras : 4;
@@ -526,10 +589,10 @@ function tick(){
 }
 render(); tick(); setInterval(tick, 1000);
 fetch("podarok-config.json", { cache: "no-store" }).then(r => r.ok ? r.json() : null).then(c => {
-  if (c) { cfg = { ...CONFIG_DEFAULT, ...c }; render(); tick(); }
+  if (c) { cfg = { ...CONFIG_DEFAULT, ...c }; render(); tick(); if (doneRec) showDone(doneRec); }
 }).catch(() => {}).finally(() => {
-  goal("podarok_view", { status });
-  if (status === "expired") goal("podarok_expired_view");
+  goal("podarok_view", { status, ...(doneRec ? { done: 1 } : {}) });
+  if (status === "expired" && !doneRec) goal("podarok_expired_view");
 });
 
 /* ---------- Видео: превью лениво, видео — только по нажатию ---------- */
@@ -651,23 +714,75 @@ $("leadForm").addEventListener("submit", async e => {
   }
   goal("podarok_lead", { gift_status: status });
   goal("lead", { form: "podarok", channel: "call" });
-  const gift = status === "active";
-  $("doneTitle").innerHTML = gift
-    ? `Подарок закреплён за вами. Ваш промокод: <span class="num">${personal.code}</span>`
-    : `Заявка принята — перезвоним на ${formatPhone(d)}`;
-  $("doneReels").innerHTML = reelsHtml(allVideos(industry));
-  $("objects").hidden = true;
-  if (cfg.max_bot_url) {
-    const u = new URL(cfg.max_bot_url);
-    u.searchParams.set("start", personal.code);
-    $("maxBot").href = u;
-    $("maxBot").hidden = false;
-  }
-  $("formArea").hidden = true;
-  $("meter").hidden = true;
-  $("done").hidden = false;
-  $("done").scrollIntoView({ block: "nearest" });
+  const rec = { at: Date.now(), code: personal.code, status, industry };
+  try { localStorage.setItem("podarok_done", JSON.stringify(rec)); } catch {}
+  showDone(rec);
+  $("doneCopy").scrollIntoView({ block: "start" });
 });
+
+/* ---------- Экран после заявки (и при повторном открытии, пока в localStorage есть podarok_done) ---------- */
+const MONTHS_GEN = ["января","февраля","марта","апреля","мая","июня","июля","августа","сентября","октября","ноября","декабря"];
+const samaraParts = ms => { const d = new Date(ms + SITE.tzOffset * 3600e3); return { y: d.getUTCFullYear(), mo: d.getUTCMonth(), day: d.getUTCDate(), h: d.getUTCHours(), mi: d.getUTCMinutes() }; };
+const dayKey = p => p.y * 1e4 + p.mo * 100 + p.day;
+// Когда придёт смета: 9:00–19:45 — через 15 минут; 19:45–24:00 — завтра до 9:15; 0:00–9:00 — сегодня до 9:15 (время Самары)
+function smetaDue(at){
+  const p = samaraParts(at), min = p.h * 60 + p.mi;
+  if (min >= 540 && min < 1185) return at + 15 * 60e3;
+  const midnight = at - ((p.h * 60 + p.mi) * 60e3) - (new Date(at).getUTCSeconds() * 1e3);
+  return midnight + (min >= 1185 ? 86400e3 : 0) + 555 * 60e3; // 9:15
+}
+function smetaText(rec, now = Date.now()){
+  const due = smetaDue(rec.at);
+  if (now > due + 30 * 60e3) return `Смета уже должна была прийти. Если её нет — позвоните: ${SITE.phoneText}`;
+  const d = samaraParts(due), n = samaraParts(now);
+  const when = dayKey(d) === dayKey(n) ? "сегодня" : "завтра";
+  return `Смета придёт ${when} до ${d.h}:${pad(d.mi)}`;
+}
+let doneRec = null;
+try { doneRec = JSON.parse(localStorage.getItem("podarok_done") || "null"); } catch {}
+function showDone(rec){
+  doneRec = rec;
+  const gift = rec.status === "active";
+  const until = samaraParts(rec.at + 30 * 864e5);
+  $("doneH1").textContent = gift ? "Регистратор закреплён за вами" : "Заявка принята";
+  $("doneHook").innerHTML = `Промокод <span class="num">${rec.code}</span> — назовите его менеджеру`;
+  $("doneHook").hidden = !gift;
+  $("doneSub").textContent = `Подарок ваш при договоре до ${until.day} ${MONTHS_GEN[until.mo]} ${until.y}`;
+  $("doneSub").hidden = !gift;
+  $("stepTime").textContent = smetaText(rec);
+  $("doneReels").innerHTML = reelsHtml(allVideos(rec.industry && INDUSTRY[rec.industry] ? rec.industry : industry));
+  if (cfg.max_bot_url) {
+    try {
+      const u = new URL(cfg.max_bot_url);
+      u.searchParams.set("start", rec.code);
+      $("maxBot").href = u;
+      $("maxBot").hidden = false;
+    } catch {}
+  }
+  document.body.classList.add("is-done");
+  $("offerCopy").hidden = true;
+  $("formArea").hidden = true;
+  $("objects").hidden = true;
+  $("doneCopy").hidden = false;
+  $("done").hidden = false;
+  $("again").hidden = false;
+}
+$("again").addEventListener("click", () => {
+  try { localStorage.removeItem("podarok_done"); } catch {}
+  doneRec = null;
+  document.body.classList.remove("is-done");
+  $("offerCopy").hidden = false;
+  $("formArea").hidden = false;
+  $("objects").hidden = false;
+  $("doneCopy").hidden = true;
+  $("done").hidden = true;
+  $("again").hidden = true;
+  $("submitBtn").disabled = false;
+  phone.value = "";
+  render();
+  $("formArea").scrollIntoView({ block: "start" });
+});
+if (doneRec && doneRec.code) showDone(doneRec);
 
 /* ---------- Мессенджеры: готовый текст; WhatsApp — в ссылке, Telegram и MAX — через буфер ---------- */
 function copyText(text){
@@ -690,6 +805,16 @@ $$("[data-msg]").forEach(a => a.addEventListener("click", () => {
   goal("podarok_msg", { messenger: a.dataset.msg, gift_status: status });
   goal("messenger_click", { messenger: a.dataset.msg });
 }));
+$$("[data-photo]").forEach(a => {
+  a.href = MSG_LINKS[a.dataset.photo];
+  a.addEventListener("click", () => {
+    const text = `Здравствуйте! Промокод ${doneRec?.code || personal.code}. Отправляю фото объекта для сметы.`;
+    if (a.dataset.photo === "whatsapp") a.href = `${SITE.whatsapp}?text=${encodeURIComponent(text)}`;
+    else { copyText(text); $("toastPhoto").hidden = false; }
+    goal("podarok_photo", { messenger: a.dataset.photo });
+    goal("messenger_click", { messenger: a.dataset.photo });
+  });
+});
 document.addEventListener("click", e => {
   if (e.target.closest('a[href^="tel:"]')) { goal("podarok_call"); goal("call_click"); }
 }, true);

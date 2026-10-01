@@ -1,7 +1,8 @@
 {
   "month": "2026-10",
-  "gifts_total": 10,
-  "gifts_left": 7,
+  "gifts_total": 5,
+  "gifts_reserved": 0,
+  "gifts_issued": 0,
   "min_cameras": 4,
   "gift_price_rub": 7250,
   "reviews_count": 41,
