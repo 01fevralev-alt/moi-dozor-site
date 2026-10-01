@@ -55,7 +55,7 @@ button{cursor:pointer;background:none;border:0}
 :focus-visible{outline:2px solid var(--accent-hi);outline-offset:3px;border-radius:6px}
 .num{font-variant-numeric:tabular-nums}
 .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
-.wrap{width:100%;max-width:760px;margin-inline:auto;padding-inline:var(--gut)}
+.wrap{width:100%;max-width:1200px;margin-inline:auto;padding-inline:var(--gut)}
 
 /* ---------- Первый экран и свечение (a / b / c — выбирает владелец, потом оставить один) ---------- */
 .hero{position:relative;isolation:isolate;overflow:hidden;padding-bottom:28px}
@@ -89,11 +89,12 @@ h1{margin-top:18px;font-size:clamp(27px,7.2vw,48px);line-height:1.1;font-weight:
 .meter-item b.left{color:var(--accent-hi)}
 
 /* ---------- Вопросы-чипсы ---------- */
-.qs{display:grid;gap:8px;margin-top:20px}
-.q{display:flex;align-items:center;gap:8px;overflow-x:auto;scrollbar-width:none;margin-inline:calc(var(--gut) * -1);padding-inline:var(--gut)}
+.form-title{margin-top:24px;font-size:19px;line-height:1.3;font-weight:700}
+.qs{display:grid;gap:8px;margin-top:14px}
+.q{display:flex;align-items:center;gap:6px;overflow-x:auto;scrollbar-width:none;margin-inline:calc(var(--gut) * -1);padding-inline:var(--gut)}
 .q::-webkit-scrollbar{display:none}
-.q-label{flex:none;min-width:58px;font-size:13px;color:var(--muted)}
-.opt{flex:none;min-height:44px;padding:0 14px;border-radius:999px;background:var(--glass);border:1px solid var(--line-2);font-size:15px;font-weight:500;white-space:nowrap;transition:background .15s,border-color .15s,color .15s}
+.q-label{flex:none;min-width:58px;font-size:13px;line-height:1.3;color:var(--muted)}
+.opt{flex:none;min-height:44px;padding:0 12px;border-radius:999px;background:var(--glass);border:1px solid var(--line-2);font-size:14.5px;font-weight:500;white-space:nowrap;transition:background .15s,border-color .15s,color .15s}
 .opt:hover{border-color:var(--accent)}
 .opt[aria-pressed="true"]{background:var(--accent);border-color:var(--accent-hi);color:#fff;font-weight:600}
 
@@ -142,6 +143,7 @@ h1{margin-top:18px;font-size:clamp(27px,7.2vw,48px);line-height:1.1;font-weight:
 /* ---------- Видео с объектов ---------- */
 .objects{padding:30px 0 36px;border-top:1px solid var(--line)}
 .objects h2{font-size:20px;font-weight:700}
+.objects h2 .cnt{margin-left:6px;font-size:15px;font-weight:500;color:var(--muted)}
 .reels{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(150px,1fr);gap:10px;margin-top:16px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none}
 .reels::-webkit-scrollbar{display:none}
 .reel{position:relative;margin:0;scroll-snap-align:start}
@@ -166,11 +168,34 @@ h1{margin-top:18px;font-size:clamp(27px,7.2vw,48px);line-height:1.1;font-weight:
   :root{--gut:28px}
   .top{height:76px}
   h1{margin-top:28px}
-  .qs{gap:10px}
+  .opt{padding:0 16px;font-size:15px}
+  .qs{gap:12px}
   .q{flex-wrap:wrap;overflow:visible;margin-inline:0;padding-inline:0}
-  .q-label{min-width:92px;font-size:14px}
+  .q-label{width:100%}
   .lead-form .btn{flex:none}
-  .reels{grid-auto-flow:row;grid-template-columns:repeat(3,1fr)}
+  .reels{grid-auto-flow:row;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:16px}
+}
+/* Компьютер: слева оффер и таймер, справа карточка с вопросами и формой */
+@media (min-width:1024px){
+  :root{--gut:40px}
+  .hero{padding-bottom:64px}
+  .hero::before{height:900px}
+  .hero-grid{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);gap:56px;align-items:center;min-height:calc(100vh - 140px);padding-top:16px}
+  .hero-copy h1{font-size:clamp(40px,3.9vw,56px)}
+  .hook{font-size:26px}
+  .sub{font-size:19px;max-width:30em}
+  .meter{flex-direction:column;align-items:flex-start;gap:14px;margin-top:32px;padding-top:28px;border-top:1px solid var(--line-2)}
+  .meter-item{font-size:17px}
+  .meter-item b{font-size:34px}
+  .hero-form{padding:30px;border-radius:24px;background:rgba(16,22,29,.72);border:1px solid var(--line-2);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 30px 80px rgba(0,0,0,.35)}
+  .hero-form .form-title{margin-top:0;font-size:21px}
+  .hero-form .lf-row{flex-direction:column}
+  .hero-form .lead-form .btn{width:100%}
+  .hero-form .msgs>span{width:100%}
+  .hero-form .msg{flex:1 1 0;justify-content:center}
+  .hero-form .done{margin-top:0;padding:0;background:none;border:0}
+  .objects{padding:48px 0 56px}
+  .objects h2{font-size:26px}
 }
 @media (max-width:639px){
   .lf-row{flex-direction:column}
@@ -202,18 +227,24 @@ h1{margin-top:18px;font-size:clamp(27px,7.2vw,48px);line-height:1.1;font-weight:
         <a class="top-phone num" data-phone-link><svg width="18" height="18"><use href="#i-phone"/></svg><span data-phone-text></span></a>
       </header>
 
+      <div class="hero-grid">
+      <div class="hero-copy">
+
       <a class="rating" data-yandex-link target="_blank" rel="noopener"><svg width="16" height="16"><use href="#i-star"/></svg><span><b>5,0</b> на Яндекс Картах, <span id="reviews">41 отзыв</span></span></a>
 
       <h1 id="title">Ещё выбираете, кто установит видеонаблюдение?</h1>
       <p class="hook" id="hook">Мы придержали для вас регистратор в подарок</p>
-      <p class="sub" id="sub">Смета в 3 вариантах за 15 минут. Регистратор — бесплатно при договоре.</p>
+      <p class="sub" id="sub">Регистратор — бесплатно при договоре.</p>
 
       <div class="meter" id="meter">
-        <span class="meter-item" id="timerBox">Подарок закреплён за вами: <b id="timer" class="num" role="timer" aria-live="off">6 д 23:59:59</b></span>
-        <span class="meter-item" id="leftBox"><span id="leftText">Осталось</span> <b class="left num" id="left">7 из 10</b></span>
+        <span class="meter-item" id="timerBox">Держим подарок ещё: <b id="timer" class="num" role="timer" aria-live="off">6 дней 23:59:59</b></span>
+        <span class="meter-item" id="leftBox"><span id="leftText">Осталось подарков:</span> <b class="left num" id="left">7 из 10</b></span>
       </div>
 
+      </div>
+      <div class="hero-form">
       <div id="formArea">
+        <h2 class="form-title">Оставьте заявку — пришлём смету в 3 вариантах за 15 минут</h2>
         <div class="qs" id="qs">
           <div class="q" role="group" aria-labelledby="q1"><span class="q-label" id="q1">Объект</span>
             <button class="opt" type="button" aria-pressed="false" data-q="obj" data-ind="sklad">Склад</button>
@@ -274,12 +305,14 @@ h1{margin-top:18px;font-size:clamp(27px,7.2vw,48px);line-height:1.1;font-weight:
         </details>
         <p class="consent">Нажимая кнопку, вы даёте <a href="consent.html">согласие на обработку персональных данных</a> и соглашаетесь с <a href="policy.html">политикой</a>.</p>
       </div>
+      </div>
+      </div>
     </div>
   </section>
 
   <section class="objects" id="objects">
     <div class="wrap">
-      <h2>С наших объектов</h2>
+      <h2>С наших объектов <span class="cnt" id="reelsCount"></span></h2>
       <div class="reels" id="reels"></div>
     </div>
   </section>
@@ -322,21 +355,29 @@ const CONFIG_DEFAULT = { month: "2026-10", gifts_total: 10, gifts_left: 7, min_c
 
 // Видео с объектов. cams — число камер (null — неизвестно, тогда подпись без него). Названия клиентов не писать.
 const VIDEOS = {
-  ntk:     { file: "ntk-mir-samara",         type: "Склад и территория", place: "Самара", cams: null },
-  ozon1:   { file: "ozon-novo-sadovaya",     type: "Пункт выдачи заказов", place: "Самара", cams: null },
-  ozon2:   { file: "ozon-tashkentskaya",     type: "Пункт выдачи заказов", place: "Самара", cams: null },
-  ceh:     { file: "tsentr-rastochki-volga", type: "Цех", place: "Самара", cams: 4 },
-  ferma1:  { file: "ferma-uzyukovo-1",       type: "Ферма", place: "часть 1", cams: null },
-  ferma2:  { file: "ferma-uzyukovo-2",       type: "Ферма", place: "часть 2", cams: null },
-  baza:    { file: "baza-novosemeykino",     type: "База", place: "Новосемейкино", cams: null },
-  angar:   { file: "angar-kabelnaya",        type: "Ангар", place: "Самара", cams: null }
+  ntk:     { file: "ntk-mir-samara",            type: "Склад и территория", place: "Самара", cams: null },
+  ozon1:   { file: "ozon-novo-sadovaya",        type: "Пункт выдачи заказов", place: "Самара", cams: null },
+  ozon2:   { file: "ozon-tashkentskaya",        type: "Пункт выдачи заказов", place: "Самара", cams: null },
+  ozon3:   { file: "ozon-krasnaya-glinka",      type: "Пункт выдачи заказов", place: "Красная Глинка", cams: null },
+  ceh:     { file: "tsentr-rastochki-volga",    type: "Цех", place: "Самара", cams: 4 },
+  ferma1:  { file: "ferma-uzyukovo-1",          type: "Ферма", place: "часть 1", cams: null },
+  ferma2:  { file: "ferma-uzyukovo-2",          type: "Ферма", place: "часть 2", cams: null },
+  baza:    { file: "baza-novosemeykino",        type: "База", place: "Новосемейкино", cams: null },
+  angar:   { file: "angar-kabelnaya",           type: "Ангар", place: "Самара", cams: null },
+  tc:      { file: "tts-el-rio",                type: "Торговый центр", place: "Самара", cams: null },
+  ofis:    { file: "ofis-sluhovyh-apparatov",   type: "Офис продаж", place: "Самара", cams: null },
+  klub:    { file: "detskiy-klub-ohotnyy-ryad", type: "Детский клуб", place: "Самара", cams: null },
+  posyolok:{ file: "novoberezovskiy",           type: "Посёлок", place: "Самарская область", cams: null },
+  podezd:  { file: "podezd-stara-zagora",       type: "Подъезд жилого дома", place: "Самара", cams: null }
 };
+// videos — первые три: их показываем после заявки и первыми в ленте; остальные ролики идут следом
 const INDUSTRY = {
   sklad: { h1: "Ещё выбираете, кто установит видеонаблюдение на склад?", videos: ["ntk", "ozon1", "ozon2"] },
   ceh:   { h1: "Ещё выбираете, кто установит видеонаблюдение в цех?", videos: ["ceh", "ferma1", "ferma2"] },
   baza:  { h1: "Ещё выбираете, кто установит видеонаблюдение на базу?", videos: ["baza", "angar", "ntk"] },
   mix:   { h1: "Ещё выбираете, кто установит видеонаблюдение?", videos: ["ntk", "ceh", "baza"] }
 };
+const allVideos = ind => [...new Set([...INDUSTRY[ind].videos, ...Object.keys(VIDEOS)])];
 
 const $ = id => document.getElementById(id);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -456,16 +497,16 @@ function render(){
   const gift = status === "active";
   $("title").textContent = status === "expired" ? "Срок подарка закончился" : INDUSTRY[startIndustry].h1;
   $("hook").hidden = !gift;
-  $("sub").textContent = gift ? "Смета в 3 вариантах за 15 минут. Регистратор — бесплатно при договоре."
-    : status === "off" ? "Смета в 3 вариантах за 15 минут."
-    : "Но смета в 3 вариантах за 15 минут — как и раньше.";
+  $("sub").textContent = gift ? "Регистратор — бесплатно при договоре." : "Но смету пришлём, как и раньше.";
+  $("sub").hidden = status === "off";
   $("meter").hidden = !(gift || status === "sold_out");
   $("timerBox").hidden = !gift;
   // Счётчик — только если конфиг на текущий месяц
   const thisMonth = new Date(Date.now() + SITE.tzOffset * 3600e3).toISOString().slice(0, 7);
   $("leftBox").hidden = gift && cfg.month !== thisMonth;
   $("left").hidden = !gift;
-  $("leftText").textContent = gift ? "Осталось" : "Подарки на этот месяц закончились";
+  const MONTHS = ["январе","феврале","марте","апреле","мае","июне","июле","августе","сентябре","октябре","ноябре","декабре"];
+  $("leftText").textContent = gift ? `Осталось подарков в ${MONTHS[+cfg.month.slice(5, 7) - 1] || "этом месяце"}:` : "Подарки на этот месяц закончились";
   $("left").textContent = `${cfg.gifts_left} из ${cfg.gifts_total}`;
   $("submitBtn").textContent = gift ? "Закрепить подарок" : "Получить смету";
   $("reviews").textContent = `${cfg.reviews_count} ${plural(cfg.reviews_count, "отзыв", "отзыва", "отзывов")}`;
@@ -477,7 +518,8 @@ function tick(){
   const left = Math.max(0, personal.deadline - Date.now());
   if (!left && status === "active") { render(); return; }
   const s = Math.floor(left / 1000);
-  $("timer").textContent = `${Math.floor(s / 86400)} д ${pad(Math.floor(s / 3600) % 24)}:${pad(Math.floor(s / 60) % 60)}:${pad(s % 60)}`;
+  const days = Math.floor(s / 86400);
+  $("timer").textContent = `${days} ${plural(days, "день", "дня", "дней")} ${pad(Math.floor(s / 3600) % 24)}:${pad(Math.floor(s / 60) % 60)}:${pad(s % 60)}`;
 }
 render(); tick(); setInterval(tick, 1000);
 fetch("podarok-config.json", { cache: "no-store" }).then(r => r.ok ? r.json() : null).then(c => {
@@ -499,7 +541,12 @@ function reelsHtml(keys){
   }).join("");
 }
 let industry = startIndustry;
-const showVideos = () => { $("reels").innerHTML = reelsHtml(INDUSTRY[industry].videos); };
+const showVideos = () => {
+  const keys = allVideos(industry);
+  $("reels").innerHTML = reelsHtml(keys);
+  $("reels").scrollLeft = 0;
+  $("reelsCount").textContent = `· ${keys.length} видео`;
+};
 showVideos();
 document.addEventListener("click", e => {
   const b = e.target.closest(".reel-play");
