@@ -102,7 +102,8 @@ function salesStage() {
 // Рекламные метки — во встроенные поля статистики сделки (utm_*, yclid, ClientID Метрики).
 // Пишем только в поля, которые есть в этой amoCRM: поле с чужим кодом amoCRM не примет, и сделка не создастся.
 const TRACKING = { utm_source: "UTM_SOURCE", utm_medium: "UTM_MEDIUM", utm_campaign: "UTM_CAMPAIGN",
-  utm_content: "UTM_CONTENT", utm_term: "UTM_TERM", yclid: "YCLID", ym_uid: "_YM_UID" };
+  utm_content: "UTM_CONTENT", utm_term: "UTM_TERM", yclid: "YCLID", ym_uid: "_YM_UID", ym_counter: "_YM_COUNTER" };
+const YM_COUNTER = "99939047"; // счётчик Метрики сайта — пишется вместе с ClientID
 let leadFields = null;
 function leadFieldIds() {
   if (!leadFields) leadFields = (async () => {
@@ -120,7 +121,7 @@ function leadFieldIds() {
   return leadFields;
 }
 async function trackingValues(lead) {
-  const values = { ...lead.ad, ym_uid: lead.ym_uid };
+  const values = { ...lead.ad, ym_uid: lead.ym_uid, ym_counter: lead.ym_uid ? YM_COUNTER : "" };
   if (!Object.values(values).some(Boolean)) return [];
   const ids = await leadFieldIds();
   return Object.entries(TRACKING)
