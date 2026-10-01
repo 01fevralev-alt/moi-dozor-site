@@ -18,14 +18,18 @@
 //
 // Виды заявок (поле kind): lead — клиент (по умолчанию); partner — клиент рекомендует знакомого (partner.html);
 // job — отклик на вакансию (jobs.html).
+// Заявки со страницы podarok.html (source=podarok) несут ещё promo, gift_status, answers, gift_deadline —
+// всё пишется в примечание к сделке (отдельного поля «Промокод» в amoCRM пока нет) и в сообщение MAX.
 //   ALLOWED_ORIGINS  адреса сайта через запятую; пусто — принимать откуда угодно
 
 const CHANNELS = { call: "позвонить", telegram: "написать в Telegram", max: "написать в MAX", whatsapp: "написать в WhatsApp" };
 const SOURCES = {
   hero: "форма на главном экране", tasks: "форма «Узнаёте?»", result: "форма «Что вы получите»", final: "форма внизу страницы",
   side: "кнопка в меню", mbar: "нижняя панель", status: "строка статуса", faq: "вопросы", case: "«Хочу так же» в кейсах",
-  engineer: "«Пригласить инженера»", case_page: "форма на странице кейса", tour: "«Записаться на экскурсию»", estimate: "смета", modal: "окно заявки"
+  engineer: "«Пригласить инженера»", case_page: "форма на странице кейса", tour: "«Записаться на экскурсию»", estimate: "смета", modal: "окно заявки",
+  podarok: "страница «Регистратор в подарок» (реклама)"
 };
+const GIFT_STATUS = { active: "закреплён", expired: "срок подарка истёк", sold_out: "подарки на месяц закончились", off: "акция выключена" };
 
 const env = name => (process.env[name] || "").trim();
 // Внешний сервис не ответил за это время — не держим посетителя сайта, идём дальше
@@ -195,6 +199,10 @@ module.exports.handler = async event => {
     page: clip(data.page, 200),
     note: clip(data.note, 500),
     case_ref: clip(data.case_ref, 120),
+    promo: /^RT-[A-Z0-9]{4}$/.test(String(data.promo || "")) ? String(data.promo) : "",
+    gift_status: GIFT_STATUS[data.gift_status] ? data.gift_status : "",
+    answers: clip(data.answers, 200),
+    gift_deadline: clip(data.gift_deadline, 40),
     ym_uid: /^\d{5,30}$/.test(String(data.ym_uid || "")) ? String(data.ym_uid) : "",
     ad: {}
   };
@@ -211,12 +219,18 @@ module.exports.handler = async event => {
   const tech = [lead.page && `Страница: ${lead.page}`, ad && `Реклама: ${ad}`, lead.ym_uid && `Яндекс Метрика ClientID: ${lead.ym_uid}`];
   const TERMS = "Условия: партнёру 10 % от договора (не более 50 000 ₽) в течение 3 дней после аванса клиента; знакомому — 9-канальный регистратор в подарок при договоре от 30 000 ₽.";
 
+  // Подарок (podarok.html): промокод, статус, ответы на вопросы
+  const giftLines = [lead.promo && `Промокод: ${lead.promo}`, lead.gift_status && `Подарок: ${GIFT_STATUS[lead.gift_status]}`,
+    lead.gift_deadline && `Личный срок подарка: до ${lead.gift_deadline}`, lead.answers && `Ответы: ${lead.answers}`].filter(Boolean);
+  const isGift = lead.source === "podarok";
+
   // Что и куда пишем в amoCRM
   let deal = null;
   if (kind === "lead") deal = {
-    name: `Заявка с сайта: ${lead.phone}`, tags: ["сайт"], contact: lead, stage: salesStage(),
+    name: isGift ? `Заявка (подарок${lead.promo ? ", " + lead.promo : ""}): ${lead.phone}` : `Заявка с сайта: ${lead.phone}`,
+    tags: isGift ? ["сайт", "подарок"] : ["сайт"], contact: lead, stage: salesStage(),
     note: [`Связаться: ${CHANNELS[lead.channel] || lead.channel}`, `Откуда: ${SOURCES[lead.source] || lead.source}`,
-           lead.case_ref && `Понравился кейс: ${lead.case_ref}`, ...tech].filter(Boolean).join("\n")
+           lead.case_ref && `Понравился кейс: ${lead.case_ref}`, ...giftLines, ...tech].filter(Boolean).join("\n")
   };
   if (kind === "partner") deal = {
     name: `Заявка на партнерство от клиента: ${lead.phone}`, tags: ["сайт", "партнёр"], contact: lead, stage: salesStage(),
@@ -256,6 +270,8 @@ module.exports.handler = async event => {
     if (lead.name) lines.push(`👤 ${esc(lead.name)}`);
     lines.push(`💬 ${esc(CHANNELS[lead.channel] || lead.channel || "—")}`, `📍 ${esc(SOURCES[lead.source] || lead.source || "—")}`);
     if (lead.case_ref) lines.push(`💡 Понравился кейс: ${esc(lead.case_ref)}`);
+    if (lead.promo || lead.gift_status) lines.push(`🎁 ${esc([lead.promo, GIFT_STATUS[lead.gift_status]].filter(Boolean).join(" · "))}`);
+    if (lead.answers) lines.push(`📝 ${esc(lead.answers)}`);
   }
   lines.push(`🕒 ${samaraTime()} (Самара)`);
   const adShort = [lead.ad.utm_source, lead.ad.utm_campaign].filter(Boolean).join(" / ") || (lead.ad.yclid ? "Яндекс Директ" : "");

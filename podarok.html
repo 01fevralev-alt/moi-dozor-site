@@ -1,0 +1,630 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<script>if(location.protocol==="http:"&&!/^(localhost|127\.|192\.168\.)/.test(location.hostname))location.replace("https://"+location.host.replace(/^www\./,"")+location.pathname+location.search+location.hash)</script>
+<!-- Страница только для рекламы в РСЯ (ретаргетинг). Не индексируется, не в sitemap.xml, ссылок с сайта нет. -->
+<meta name="robots" content="noindex, nofollow">
+<title>Регистратор в подарок — Мой Дозор</title>
+<link rel="icon" type="image/png" href="logo/dozor-favicon-256.png">
+<link rel="apple-touch-icon" href="logo/dozor-avatar-512.png">
+<meta name="theme-color" content="#0B0F14">
+<!-- Яндекс Метрика (тот же счётчик, что на сайте). Цели — в скрипте внизу, раздел «Metrika goals» -->
+<script>
+(function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
+m[i].l=1*new Date();
+for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
+k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})
+(window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym");
+ym(99939047, "init", { webvisor: true, clickmap: true, trackLinks: true, accurateTrackBounce: true });
+</script>
+<noscript><div><img src="https://mc.yandex.ru/watch/99939047" style="position:absolute;left:-9999px" alt=""></div></noscript>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0B0F14;
+  --panel:#10161D;
+  --surface:#151C24;
+  --line:rgba(255,255,255,.09);
+  --line-2:rgba(255,255,255,.16);
+  --glass:rgba(255,255,255,.06);
+  --text:#F2F4F6;
+  --soft:#C9D1DA;
+  --muted:#8C98A6;
+  --dim:#5F6B78;
+  --accent:#E08A1E;
+  --accent-hi:#F2A13A;
+  --accent-lo:#C66F0E;
+  --glow:rgba(224,138,30,.55);
+  --rec:#FF3B30;
+  --r:16px;
+  --gut:16px;
+  --font:"Onest",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%}
+body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:16px;line-height:1.5;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+img,svg{display:block}
+a{color:inherit;text-decoration:none}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer;background:none;border:0}
+:focus-visible{outline:2px solid var(--accent-hi);outline-offset:3px;border-radius:6px}
+.num{font-variant-numeric:tabular-nums}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.wrap{width:100%;max-width:760px;margin-inline:auto;padding-inline:var(--gut)}
+
+/* ---------- Первый экран и свечение (a / b / c — выбирает владелец, потом оставить один) ---------- */
+.hero{position:relative;isolation:isolate;overflow:hidden;padding-bottom:28px}
+.hero::before{content:"";position:absolute;z-index:-1;inset:-10% -30% auto;height:640px;pointer-events:none}
+.g-a .hero::before{background:
+  radial-gradient(60% 55% at 78% 8%,rgba(242,161,58,.42),rgba(224,138,30,.2) 45%,transparent 75%)}
+.g-b .hero::before{background:
+  radial-gradient(42% 40% at 80% 6%,rgba(224,138,30,.5),transparent 70%),
+  radial-gradient(50% 46% at 56% 22%,rgba(242,102,74,.3),transparent 72%),
+  radial-gradient(60% 55% at 26% 30%,rgba(91,31,58,.55),transparent 75%)}
+.g-c .hero::before{background:
+  radial-gradient(44% 42% at 84% 6%,rgba(224,138,30,.45),transparent 72%),
+  radial-gradient(50% 50% at 10% 44%,rgba(107,63,160,.42),transparent 74%)}
+
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;height:60px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:17px;letter-spacing:.01em}
+.top-phone{display:flex;align-items:center;gap:8px;min-height:44px;font-weight:600;font-size:15px}
+.top-phone svg{color:var(--accent-hi)}
+
+.rating{display:inline-flex;align-items:center;gap:8px;min-height:36px;margin-top:6px;padding:0 14px;border-radius:999px;background:rgba(255,255,255,.07);border:1px solid rgba(224,138,30,.38);font-size:14px;font-weight:500;color:#DCE2E8}
+.rating svg{color:var(--accent-hi)}
+.rating b{font-weight:700;color:var(--text)}
+
+h1{margin-top:18px;font-size:clamp(27px,7.2vw,48px);line-height:1.1;font-weight:800;letter-spacing:-.015em}
+.hook{margin-top:10px;font-size:clamp(19px,5vw,26px);line-height:1.25;font-weight:700;color:var(--accent-hi)}
+.sub{margin-top:10px;font-size:clamp(15px,4vw,18px);color:var(--soft)}
+
+.meter{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 28px;margin-top:18px}
+.meter-item{display:flex;align-items:baseline;gap:8px;font-size:clamp(14px,3.8vw,16px);color:var(--soft);white-space:nowrap}
+.meter-item b{font-size:clamp(20px,5.6vw,28px);font-weight:800;color:var(--text);font-variant-numeric:tabular-nums;letter-spacing:.01em}
+.meter-item b.left{color:var(--accent-hi)}
+
+/* ---------- Вопросы-чипсы ---------- */
+.qs{display:grid;gap:8px;margin-top:20px}
+.q{display:flex;align-items:center;gap:8px;overflow-x:auto;scrollbar-width:none;margin-inline:calc(var(--gut) * -1);padding-inline:var(--gut)}
+.q::-webkit-scrollbar{display:none}
+.q-label{flex:none;min-width:58px;font-size:13px;color:var(--muted)}
+.opt{flex:none;min-height:44px;padding:0 14px;border-radius:999px;background:var(--glass);border:1px solid var(--line-2);font-size:15px;font-weight:500;white-space:nowrap;transition:background .15s,border-color .15s,color .15s}
+.opt:hover{border-color:var(--accent)}
+.opt[aria-pressed="true"]{background:var(--accent);border-color:var(--accent-hi);color:#fff;font-weight:600}
+
+/* ---------- Форма ---------- */
+.lead-form{margin-top:18px}
+.lf-row{display:flex;gap:12px}
+.field{position:relative;flex:1;min-width:0}
+.field input{width:100%;height:58px;padding:0 20px;border-radius:var(--r);background:rgba(255,255,255,.96);color:#0B0F14;border:2px solid transparent;font-size:19px;font-weight:600;letter-spacing:.01em;outline:none;transition:border-color .15s,box-shadow .15s}
+.field input::placeholder{color:#8894A1;font-weight:500}
+.field input:focus{border-color:var(--accent);box-shadow:0 0 0 4px rgba(224,138,30,.25)}
+.field input[aria-invalid="true"]{border-color:var(--rec)}
+.lf-err{font-size:13px;color:#FF8A80;margin-top:8px}
+.lf-err:empty{display:none}
+.btn{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:10px;height:58px;padding:0 30px;border-radius:var(--r);font-weight:700;font-size:17px;letter-spacing:.01em;white-space:nowrap;transition:transform .12s,box-shadow .15s,filter .15s}
+.btn-accent{color:#fff;text-shadow:0 1px 1px rgba(110,52,0,.45);
+  background:linear-gradient(180deg,#F7AE4B 0%,var(--accent) 52%,var(--accent-lo) 100%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.5),inset 0 -2px 0 rgba(120,56,0,.35),0 5px 0 #8E4F0A,0 12px 30px var(--glow)}
+.btn-accent:hover{filter:brightness(1.07)}
+.btn-accent:active{transform:translateY(4px);box-shadow:inset 0 1px 0 rgba(255,255,255,.4),inset 0 -1px 0 rgba(120,56,0,.3),0 1px 0 #8E4F0A,0 6px 18px var(--glow)}
+.btn-accent:disabled{filter:saturate(.6) brightness(.85);cursor:wait}
+
+.msgs{display:flex;flex-wrap:wrap;align-items:center;gap:8px 8px;margin-top:20px;font-size:14px;color:var(--muted)}
+.msg{display:inline-flex;align-items:center;gap:7px;min-height:44px;padding:0 14px;border-radius:12px;background:var(--glass);border:1px solid var(--line-2);font-weight:600;font-size:14px;color:var(--text);transition:border-color .15s,background .15s}
+.msg:hover{border-color:var(--accent);background:rgba(224,138,30,.1)}
+.msg svg{color:var(--accent-hi)}
+.toast{margin-top:10px;font-size:14px;color:var(--accent-hi)}
+
+.fine{margin-top:16px;font-size:12px;line-height:1.45;color:var(--dim)}
+.fine a{text-decoration:underline;text-underline-offset:2px}
+.fine a:hover{color:var(--muted)}
+.terms summary{display:inline-flex;align-items:center;min-height:32px;cursor:pointer;color:var(--muted);text-decoration:underline dotted;text-underline-offset:3px;list-style:none}
+.terms summary::-webkit-details-marker{display:none}
+.terms p{margin:4px 0 10px;max-width:48em;color:var(--muted)}
+.consent{margin-top:6px;max-width:44em}
+
+/* ---------- Готово ---------- */
+.done{margin-top:22px;padding:22px;border-radius:var(--r);background:rgba(16,22,29,.86);border:1px solid rgba(224,138,30,.45)}
+.done-title{display:flex;gap:12px;align-items:flex-start;font-size:20px;line-height:1.3;font-weight:700}
+.done-title svg{flex:none;color:var(--accent-hi)}
+.done-title .num{color:var(--accent-hi);white-space:nowrap}
+.done p{margin-top:10px;color:var(--soft)}
+.done .btn{margin-top:16px}
+.done .chan{display:inline-block;margin-top:14px;font-size:14px;color:var(--muted);text-decoration:underline;text-underline-offset:2px}
+.done .reels{margin-top:14px}
+
+/* ---------- Видео с объектов ---------- */
+.objects{padding:30px 0 36px;border-top:1px solid var(--line)}
+.objects h2{font-size:20px;font-weight:700}
+.reels{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(150px,1fr);gap:10px;margin-top:16px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none}
+.reels::-webkit-scrollbar{display:none}
+.reel{position:relative;margin:0;scroll-snap-align:start}
+.reel-box{position:relative;aspect-ratio:9/16;border-radius:16px;overflow:hidden;background:#05080B;border:1px solid var(--line-2)}
+.reel-play{position:absolute;inset:0;display:block;width:100%;height:100%;padding:0;color:#fff}
+.reel-play img{width:100%;height:100%;object-fit:cover}
+.reel-btn{position:absolute;left:50%;top:50%;width:52px;height:52px;margin:-26px 0 0 -26px;border-radius:50%;display:grid;place-items:center;background:var(--accent);color:#fff;box-shadow:0 8px 24px rgba(0,0,0,.4)}
+.reel video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#000}
+.reel figcaption{margin-top:8px;font-size:14px;color:var(--soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+.foot{padding:22px 0 30px;border-top:1px solid var(--line);font-size:13px;line-height:1.6;color:var(--dim)}
+.foot a{color:var(--muted)}
+.foot a:hover{color:var(--text)}
+.foot p+p{margin-top:4px}
+
+/* Переключатель градиента — только при ?preview=1 */
+.gswitch{position:fixed;right:12px;bottom:12px;z-index:9;display:flex;gap:4px;padding:4px;border-radius:12px;background:rgba(16,22,29,.92);border:1px solid var(--line-2)}
+.gswitch button{width:44px;height:44px;border-radius:9px;font-weight:700;color:var(--muted)}
+.gswitch button[aria-pressed="true"]{background:var(--accent);color:#fff}
+
+@media (min-width:640px){
+  :root{--gut:28px}
+  .top{height:76px}
+  h1{margin-top:28px}
+  .qs{gap:10px}
+  .q{flex-wrap:wrap;overflow:visible;margin-inline:0;padding-inline:0}
+  .q-label{min-width:92px;font-size:14px}
+  .lead-form .btn{flex:none}
+  .reels{grid-auto-flow:row;grid-template-columns:repeat(3,1fr)}
+}
+@media (max-width:639px){
+  .lf-row{flex-direction:column}
+  .msgs>span{width:100%}
+  .msg{flex:1 1 0;justify-content:center;padding:0 8px}
+  .lead-form .btn{width:100%}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body class="g-b">
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-logo" viewBox="0 0 120 120"><path d="M100 44 V88 A12 12 0 0 1 88 100 H32 A12 12 0 0 1 20 88 V32 A12 12 0 0 1 32 20 H76" fill="none" stroke="#FFFFFF" stroke-width="8"/><circle cx="92" cy="28" r="11" fill="#E08A1E"/></symbol>
+  <symbol id="i-phone" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/></symbol>
+  <symbol id="i-tg" viewBox="0 0 24 24"><path fill="currentColor" d="M21.4 4.3 2.9 11.4c-1.3.5-1.2 1.2-.2 1.5l4.7 1.5 1.8 5.6c.2.6.4.8.9.8.4 0 .6-.2.9-.5l2.3-2.2 4.7 3.5c.9.5 1.5.2 1.7-.8L22.8 5.6c.3-1.3-.5-1.8-1.4-1.3ZM9 14.2l9.6-6.1c.5-.3.9-.1.5.2l-8 7.2-.3 3.3L9 14.2Z"/></symbol>
+  <symbol id="i-wa" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2.2A9.7 9.7 0 0 0 3.6 16.8L2.3 21.7l5-1.3A9.7 9.7 0 1 0 12 2.2Zm0 17.7c-1.5 0-2.9-.4-4.1-1.1l-.3-.2-3 .8.8-2.9-.2-.3A8 8 0 1 1 12 19.9Zm4.4-6c-.2-.1-1.4-.7-1.7-.8-.2-.1-.4-.1-.5.1l-.8 1c-.1.2-.3.2-.5.1a6.6 6.6 0 0 1-3.3-2.9c-.2-.4.2-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.5-.4h-.5a.9.9 0 0 0-.6.3 2.7 2.7 0 0 0-.9 2c0 1.2.9 2.4 1 2.5.1.2 1.7 2.7 4.2 3.8 1.6.7 2.2.7 3 .6.5-.1 1.4-.6 1.6-1.1.2-.6.2-1 .1-1.1l-.5-.3Z"/></symbol>
+  <symbol id="i-max" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round" d="M12 3a9 9 0 0 0-7.8 13.5L3 21l4.6-1.2A9 9 0 1 0 12 3Z"/><path d="M8 15.5v-7l4 4.2 4-4.2v7" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5.5v13l11-6.5z" fill="currentColor"/></symbol>
+  <symbol id="i-star" viewBox="0 0 20 20"><path fill="currentColor" d="m10 1.8 2.5 5.3 5.7.7-4.2 4 1.1 5.7L10 14.7l-5.1 2.8L6 11.8l-4.2-4 5.7-.7L10 1.8Z"/></symbol>
+  <symbol id="i-ok" viewBox="0 0 28 28"><circle cx="14" cy="14" r="13" fill="currentColor" opacity=".18"/><path d="m8.5 14.5 3.8 3.8 7.2-7.6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+</svg>
+
+<main>
+  <section class="hero">
+    <div class="wrap">
+      <header class="top">
+        <span class="brand"><svg width="30" height="30"><use href="#i-logo"/></svg>Мой Дозор</span>
+        <a class="top-phone num" data-phone-link><svg width="18" height="18"><use href="#i-phone"/></svg><span data-phone-text></span></a>
+      </header>
+
+      <a class="rating" data-yandex-link target="_blank" rel="noopener"><svg width="16" height="16"><use href="#i-star"/></svg><span><b>5,0</b> на Яндекс Картах, <span id="reviews">41 отзыв</span></span></a>
+
+      <h1 id="title">Ещё выбираете, кто установит видеонаблюдение?</h1>
+      <p class="hook" id="hook">Мы придержали для вас регистратор в подарок</p>
+      <p class="sub" id="sub">Смета в 3 вариантах за 15 минут. Регистратор — бесплатно при договоре.</p>
+
+      <div class="meter" id="meter">
+        <span class="meter-item" id="timerBox">Подарок закреплён за вами: <b id="timer" class="num" role="timer" aria-live="off">6 д 23:59:59</b></span>
+        <span class="meter-item" id="leftBox"><span id="leftText">Осталось</span> <b class="left num" id="left">7 из 10</b></span>
+      </div>
+
+      <div id="formArea">
+        <div class="qs" id="qs">
+          <div class="q" role="group" aria-labelledby="q1"><span class="q-label" id="q1">Объект</span>
+            <button class="opt" type="button" aria-pressed="false" data-q="obj" data-ind="sklad">Склад</button>
+            <button class="opt" type="button" aria-pressed="false" data-q="obj" data-ind="ceh">Цех</button>
+            <button class="opt" type="button" aria-pressed="false" data-q="obj" data-ind="baza">База или ангар</button>
+            <button class="opt" type="button" aria-pressed="false" data-q="obj" data-ind="mix">Другое</button>
+          </div>
+          <div class="q" role="group" aria-labelledby="q2"><span class="q-label" id="q2">Камер</span>
+            <button class="opt" type="button" aria-pressed="false" data-q="cams">До 8</button>
+            <button class="opt" type="button" aria-pressed="false" data-q="cams">8–16</button>
+            <button class="opt" type="button" aria-pressed="false" data-q="cams">Больше 16</button>
+            <button class="opt" type="button" aria-pressed="false" data-q="cams">Не знаю</button>
+          </div>
+          <div class="q" role="group" aria-labelledby="q3"><span class="q-label" id="q3">Когда</span>
+            <button class="opt" type="button" aria-pressed="false" data-q="when">В этом месяце</button>
+            <button class="opt" type="button" aria-pressed="false" data-q="when">В ближайшие 3 месяца</button>
+            <button class="opt" type="button" aria-pressed="false" data-q="when">Пока изучаю</button>
+          </div>
+        </div>
+
+        <form class="lead-form" id="leadForm" novalidate>
+          <div class="lf-row">
+            <div class="field">
+              <label class="sr-only" for="phone">Ваш телефон</label>
+              <input id="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+7 (___) ___-__-__" aria-describedby="phoneErr" class="ym-hide-content ym-disable-keys">
+            </div>
+            <button class="btn btn-accent" type="submit" id="submitBtn">Закрепить подарок</button>
+          </div>
+          <p class="lf-err" id="phoneErr" role="alert"></p>
+          <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0">
+        </form>
+
+        <div class="msgs">
+          <span>или напишите в</span>
+          <a class="msg" data-msg="max" target="_blank" rel="noopener"><svg width="18" height="18"><use href="#i-max"/></svg>MAX</a>
+          <a class="msg" data-msg="telegram" target="_blank" rel="noopener"><svg width="18" height="18"><use href="#i-tg"/></svg>Telegram</a>
+          <a class="msg" data-msg="whatsapp" target="_blank" rel="noopener"><svg width="18" height="18"><use href="#i-wa"/></svg>WhatsApp</a>
+        </div>
+        <p class="toast" id="toast" role="status" hidden>Текст скопирован — вставьте его в чат</p>
+      </div>
+
+      <div class="done" id="done" role="status" hidden>
+        <p class="done-title"><svg width="28" height="28"><use href="#i-ok"/></svg><span id="doneTitle"></span></p>
+        <p>Смету пришлём в течение 15 минут в рабочее время — ежедневно с 9:00 до 20:00.</p>
+        <p>Пока ждёте — посмотрите объекты, похожие на ваш:</p>
+        <div class="reels" id="doneReels"></div>
+        <a class="btn btn-accent" id="maxBot" target="_blank" rel="noopener" hidden>Получать смету и новости в MAX</a>
+        <br><a class="chan" data-tgch-link target="_blank" rel="noopener">Наш канал в Telegram</a>
+      </div>
+
+      <div class="fine">
+        <!-- ПРОВЕРИТЬ У ЮРИСТА: весь текст условий акции -->
+        <details class="terms">
+          <summary>Условия акции</summary>
+          <p>Подарок — 9-канальный сетевой видеорегистратор при заключении договора поставки и монтажа на сумму от <span id="tMin">[ХХ]</span> ₽ в течение 30 дней с даты заявки. Подарок закрепляется за заявкой, оставленной до окончания личного срока на этой странице. Один подарок на договор. Количество ограничено: <span id="tTotal">[N]</span> в месяц.
+            <!-- ПРОВЕРИТЬ: решение владельца -->[Суммируется / не суммируется] со скидкой 5 % при 100 % предоплате.
+            Организатор: ИП Февралев И. Н., ОГРНИП 316631300090117.</p>
+        </details>
+        <p class="consent">Нажимая кнопку, вы даёте <a href="consent.html">согласие на обработку персональных данных</a> и соглашаетесь с <a href="policy.html">политикой</a>.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="objects" id="objects">
+    <div class="wrap">
+      <h2>С наших объектов</h2>
+      <div class="reels" id="reels"></div>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <p>ИП Февралев Илья Николаевич · ОГРНИП 316631300090117</p>
+    <p><a data-phone-link data-phone-text></a> · <a data-mail-link data-mail-text></a> · <a href="policy.html">Политика конфиденциальности</a></p>
+  </div>
+</footer>
+
+<nav class="gswitch" id="gswitch" aria-label="Вариант свечения" hidden>
+  <button type="button" data-g="a" aria-pressed="false">A</button>
+  <button type="button" data-g="b" aria-pressed="false">B</button>
+  <button type="button" data-g="c" aria-pressed="false">C</button>
+</nav>
+
+<script src="active-goals.js" defer></script>
+<script>
+/* =========================================================
+   Настройки страницы. Контакты и адрес функции — как на сайте (index.html → SITE).
+   Акция (подарков осталось, сумма договора и т. п.) — в podarok-config.json.
+   ========================================================= */
+const SITE = {
+  phone: "+79057239958",
+  phoneText: "+7 (905) 723-99-58",
+  email: "moi.dozor@yandex.ru",
+  telegram: "https://t.me/moidozor",
+  telegramChannel: "https://t.me/moi_dozor",
+  max: "https://max.ru/u/f9LHodD0cOKmwtOs1f3l4xfizoj29mkjbfVvI9cJH-Tu8UZXKq8N12we6Lo",
+  whatsapp: "https://wa.me/79057239958",
+  yandexReviews: "https://yandex.ru/maps/org/moy_dozor/140683366587/reviews/",
+  metrika: 99939047,
+  leadEndpoint: "https://functions.yandexcloud.net/d4eirdv1tglmcebcq8qj",
+  tzOffset: 4
+};
+// Если файл конфига не загрузился — эти значения (держать такими же, как в podarok-config.json)
+const CONFIG_DEFAULT = { month: "2026-10", gifts_total: 10, gifts_left: 7, min_contract_rub: 0, reviews_count: 41, max_bot_url: "", active: true };
+
+// Видео с объектов. cams — число камер (null — неизвестно, тогда подпись без него). Названия клиентов не писать.
+const VIDEOS = {
+  ntk:     { file: "ntk-mir-samara",         type: "Склад и территория", place: "Самара", cams: null },
+  ozon1:   { file: "ozon-novo-sadovaya",     type: "Пункт выдачи заказов", place: "Самара", cams: null },
+  ozon2:   { file: "ozon-tashkentskaya",     type: "Пункт выдачи заказов", place: "Самара", cams: null },
+  ceh:     { file: "tsentr-rastochki-volga", type: "Цех", place: "Самара", cams: 4 },
+  ferma1:  { file: "ferma-uzyukovo-1",       type: "Ферма", place: "часть 1", cams: null },
+  ferma2:  { file: "ferma-uzyukovo-2",       type: "Ферма", place: "часть 2", cams: null },
+  baza:    { file: "baza-novosemeykino",     type: "База", place: "Новосемейкино", cams: null },
+  angar:   { file: "angar-kabelnaya",        type: "Ангар", place: "Самара", cams: null }
+};
+const INDUSTRY = {
+  sklad: { h1: "Ещё выбираете, кто установит видеонаблюдение на склад?", videos: ["ntk", "ozon1", "ozon2"] },
+  ceh:   { h1: "Ещё выбираете, кто установит видеонаблюдение в цех?", videos: ["ceh", "ferma1", "ferma2"] },
+  baza:  { h1: "Ещё выбираете, кто установит видеонаблюдение на базу?", videos: ["baza", "angar", "ntk"] },
+  mix:   { h1: "Ещё выбираете, кто установит видеонаблюдение?", videos: ["ntk", "ceh", "baza"] }
+};
+
+const $ = id => document.getElementById(id);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const pad = n => String(n).padStart(2, "0");
+const DAY = 864e5, TERM = 7 * DAY;
+
+/* ---------- Metrika goals ---------- */
+function goal(name, params){
+  try { if (window.ym && SITE.metrika) ym(SITE.metrika, "reachGoal", name, params); } catch {}
+}
+const goalsOnce = new Set();
+const goalOnce = (name, params) => { if (!goalsOnce.has(name)) { goalsOnce.add(name); goal(name, params); } };
+
+/* ---------- Рекламные метки и ClientID — тот же механизм, что на сайте ---------- */
+const AD_KEYS = ["utm_source","utm_medium","utm_campaign","utm_content","utm_term","yclid"];
+const query = new URLSearchParams(location.search);
+const adTags = (() => {
+  const fresh = {};
+  AD_KEYS.forEach(k => { if (query.get(k)) fresh[k] = query.get(k).slice(0, 150); });
+  try {
+    if (Object.keys(fresh).length) sessionStorage.setItem("dozor_ad", JSON.stringify(fresh));
+    return JSON.parse(sessionStorage.getItem("dozor_ad") || "{}");
+  } catch { return fresh; }
+})();
+const metrikaClientId = () => new Promise(res => {
+  if (!window.ym || !SITE.metrika) return res("");
+  const t = setTimeout(() => res(""), 700);
+  try { ym(SITE.metrika, "getClientID", id => { clearTimeout(t); res(String(id || "")); }); } catch { clearTimeout(t); res(""); }
+});
+async function sendLead(lead){
+  const ym_uid = await metrikaClientId();
+  lead = { ...lead, ...(ym_uid ? { ym_uid } : {}), ...(Object.keys(adTags).length ? { ad: adTags } : {}) };
+  if (!SITE.leadEndpoint) { console.info("Заявка:", lead); return true; }
+  const ctrl = new AbortController(), timer = setTimeout(() => ctrl.abort(), 15000);
+  try {
+    // text/plain — «простой» запрос без предварительной CORS-проверки; функция всё равно разбирает JSON
+    const r = await fetch(SITE.leadEndpoint, { method: "POST", headers: { "Content-Type": "text/plain" }, body: JSON.stringify(lead), signal: ctrl.signal });
+    return r.ok;
+  } catch { return false; }
+  finally { clearTimeout(timer); }
+}
+
+/* ---------- Контакты ---------- */
+$$("[data-phone-link]").forEach(a => a.href = "tel:" + SITE.phone);
+$$("[data-phone-text]").forEach(a => a.textContent = SITE.phoneText);
+$$("[data-mail-link]").forEach(a => a.href = "mailto:" + SITE.email);
+$$("[data-mail-text]").forEach(a => a.textContent = SITE.email);
+$$("[data-yandex-link]").forEach(a => a.href = SITE.yandexReviews);
+$$("[data-tgch-link]").forEach(a => a.href = SITE.telegramChannel);
+const MSG_LINKS = { max: SITE.max, telegram: SITE.telegram, whatsapp: SITE.whatsapp };
+$$("[data-msg]").forEach(a => a.href = MSG_LINKS[a.dataset.msg]);
+
+/* ---------- Свечение: ?g=a|b|c, без параметра — b; ?preview=1 — переключатель ---------- */
+(() => {
+  const set = g => {
+    document.body.classList.remove("g-a", "g-b", "g-c");
+    document.body.classList.add("g-" + g);
+    $$("#gswitch button").forEach(b => b.setAttribute("aria-pressed", b.dataset.g === g));
+  };
+  set(["a", "b", "c"].includes(query.get("g")) ? query.get("g") : "b");
+  if (query.get("preview") !== "1") return;
+  $("gswitch").hidden = false;
+  $("gswitch").addEventListener("click", e => {
+    const b = e.target.closest("[data-g]");
+    if (!b) return;
+    set(b.dataset.g);
+    const q = new URLSearchParams(location.search);
+    q.set("g", b.dataset.g);
+    history.replaceState(null, "", "?" + q);
+  });
+})();
+
+/* ---------- Личный срок и промокод (localStorage; недоступен — срок от текущего визита) ---------- */
+const personal = (() => {
+  const now = Date.now();
+  let start = now, code = "";
+  const newCode = () => {
+    const abc = "ACDEFHJKMNPRTUVWXY34679"; // без похожих: 0/O, 1/I/L, 2/Z, 5/S, 8/B
+    const rnd = crypto.getRandomValues(new Uint32Array(4));
+    return "RT-" + [...rnd].map(n => abc[n % abc.length]).join("");
+  };
+  try {
+    const raw = localStorage.getItem("podarok_start") || "";
+    const saved = /^\d+$/.test(raw) ? +raw : Date.parse(raw);
+    if (saved && saved <= now) start = saved;
+    else localStorage.setItem("podarok_start", String(start));
+    code = localStorage.getItem("podarok_code") || "";
+    if (!/^RT-[A-Z0-9]{4}$/.test(code)) { code = newCode(); localStorage.setItem("podarok_code", code); }
+  } catch { code = code || newCode(); }
+  return { start, code, deadline: start + TERM };
+})();
+const samaraDate = ms => {
+  const d = new Date(ms + SITE.tzOffset * 3600e3);
+  return `${pad(d.getUTCDate())}.${pad(d.getUTCMonth() + 1)}.${d.getUTCFullYear()} ${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}`;
+};
+
+/* ---------- Отрасль из рекламы: utm_content или ?obj= (sklad | ceh | baza) ---------- */
+const startIndustry = (() => {
+  const v = (query.get("obj") || query.get("utm_content") || "").toLowerCase();
+  return ["sklad", "ceh", "baza"].find(k => v.includes(k)) || "mix";
+})();
+
+/* ---------- Состояние оффера: active | expired | sold_out | off ---------- */
+let cfg = CONFIG_DEFAULT, status = "active";
+const plural = (n, one, few, many) => {
+  const a = n % 10, b = n % 100;
+  return a === 1 && b !== 11 ? one : a >= 2 && a <= 4 && (b < 12 || b > 14) ? few : many;
+};
+function computeStatus(){
+  if (cfg.active === false) return "off";
+  if (Date.now() >= personal.deadline) return "expired";
+  if (!(cfg.gifts_left > 0)) return "sold_out";
+  return "active";
+}
+function render(){
+  status = computeStatus();
+  const gift = status === "active";
+  $("title").textContent = status === "expired" ? "Срок подарка закончился" : INDUSTRY[startIndustry].h1;
+  $("hook").hidden = !gift;
+  $("sub").textContent = gift ? "Смета в 3 вариантах за 15 минут. Регистратор — бесплатно при договоре."
+    : status === "off" ? "Смета в 3 вариантах за 15 минут."
+    : "Но смета в 3 вариантах за 15 минут — как и раньше.";
+  $("meter").hidden = !(gift || status === "sold_out");
+  $("timerBox").hidden = !gift;
+  // Счётчик — только если конфиг на текущий месяц
+  const thisMonth = new Date(Date.now() + SITE.tzOffset * 3600e3).toISOString().slice(0, 7);
+  $("leftBox").hidden = gift && cfg.month !== thisMonth;
+  $("left").hidden = !gift;
+  $("leftText").textContent = gift ? "Осталось" : "Подарки на этот месяц закончились";
+  $("left").textContent = `${cfg.gifts_left} из ${cfg.gifts_total}`;
+  $("submitBtn").textContent = gift ? "Закрепить подарок" : "Получить смету";
+  $("reviews").textContent = `${cfg.reviews_count} ${plural(cfg.reviews_count, "отзыв", "отзыва", "отзывов")}`;
+  $("tMin").textContent = cfg.min_contract_rub > 0 ? Number(cfg.min_contract_rub).toLocaleString("ru-RU") : "[ХХ]";
+  $("tTotal").textContent = cfg.gifts_total > 0 ? cfg.gifts_total : "[N]";
+  $$(".terms").forEach(t => t.hidden = status === "off");
+}
+function tick(){
+  const left = Math.max(0, personal.deadline - Date.now());
+  if (!left && status === "active") { render(); return; }
+  const s = Math.floor(left / 1000);
+  $("timer").textContent = `${Math.floor(s / 86400)} д ${pad(Math.floor(s / 3600) % 24)}:${pad(Math.floor(s / 60) % 60)}:${pad(s % 60)}`;
+}
+render(); tick(); setInterval(tick, 1000);
+fetch("podarok-config.json", { cache: "no-store" }).then(r => r.ok ? r.json() : null).then(c => {
+  if (c) { cfg = { ...CONFIG_DEFAULT, ...c }; render(); tick(); }
+}).catch(() => {}).finally(() => {
+  goal("podarok_view", { status });
+  if (status === "expired") goal("podarok_expired_view");
+});
+
+/* ---------- Видео: превью лениво, видео — только по нажатию ---------- */
+function reelsHtml(keys){
+  return keys.map(k => {
+    const v = VIDEOS[k], cap = `${v.type}, ${v.cams ? v.cams + " " + plural(v.cams, "камера", "камеры", "камер") : v.place}`;
+    return `<figure class="reel"><div class="reel-box">
+      <button class="reel-play" type="button" data-file="${v.file}" aria-label="Смотреть видео: ${cap}">
+        <img src="assets/video/${v.file}.jpg" alt="" width="540" height="960" loading="lazy" decoding="async">
+        <span class="reel-btn"><svg width="22" height="22"><use href="#i-play"/></svg></span>
+      </button></div><figcaption>${cap}</figcaption></figure>`;
+  }).join("");
+}
+let industry = startIndustry;
+const showVideos = () => { $("reels").innerHTML = reelsHtml(INDUSTRY[industry].videos); };
+showVideos();
+document.addEventListener("click", e => {
+  const b = e.target.closest(".reel-play");
+  if (!b) return;
+  const v = document.createElement("video");
+  Object.assign(v, { src: `assets/video/${b.dataset.file}.mp4`, poster: `assets/video/${b.dataset.file}.jpg`, controls: true, playsInline: true, autoplay: true });
+  b.replaceWith(v);
+  v.play().catch(() => {});
+  goal("video_play", { video: b.dataset.file, page: "podarok" });
+});
+
+/* ---------- Вопросы: одно нажатие — выбор, повторное — снять ---------- */
+$$(".opt").forEach(o => o.addEventListener("click", () => {
+  const on = o.getAttribute("aria-pressed") !== "true";
+  $$(`.opt[data-q="${o.dataset.q}"]`).forEach(x => x.setAttribute("aria-pressed", "false"));
+  o.setAttribute("aria-pressed", on);
+  goalOnce("podarok_answer");
+  if (o.dataset.q === "obj") {
+    const next = on ? o.dataset.ind : "mix";
+    if (next !== industry) { industry = next; showVideos(); }
+  }
+}));
+if (startIndustry !== "mix") document.querySelector(`.opt[data-ind="${startIndustry}"]`).setAttribute("aria-pressed", "true");
+const Q_NAMES = { obj: "Объект", cams: "Камер", when: "Когда" };
+const answersText = () => Object.entries(Q_NAMES).map(([q, name]) => {
+  const o = document.querySelector(`.opt[data-q="${q}"][aria-pressed="true"]`);
+  return o ? `${name}: ${o.textContent}` : "";
+}).filter(Boolean).join("; ");
+
+/* ---------- Телефон: маска как на сайте ---------- */
+function digitsOf(v){
+  let d = v.replace(/\D/g, "");
+  if (d[0] === "8" || d[0] === "7") d = d.slice(1);
+  return d.slice(0, 10);
+}
+function formatPhone(d){
+  if (!d.length) return "";
+  let s = "+7 (" + d.slice(0, 3);
+  if (d.length >= 3) s += ") " + d.slice(3, 6);
+  if (d.length >= 6) s += "-" + d.slice(6, 8);
+  if (d.length >= 8) s += "-" + d.slice(8, 10);
+  return s;
+}
+const phone = $("phone"), err = $("phoneErr");
+const clearErr = () => { err.textContent = ""; phone.removeAttribute("aria-invalid"); };
+let prev = "";
+phone.addEventListener("input", e => {
+  let d = digitsOf(phone.value);
+  if (e.inputType === "deleteContentBackward" && d === prev) d = d.slice(0, -1);
+  prev = d;
+  phone.value = formatPhone(d);
+  if (d.length === 10) clearErr();
+  goalOnce("form_start", { form: "podarok" });
+});
+phone.addEventListener("focus", () => { if (!phone.value) phone.value = "+7 ("; });
+phone.addEventListener("blur", () => { if (!digitsOf(phone.value).length) phone.value = ""; });
+
+/* ---------- Отправка ---------- */
+$("leadForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  const d = digitsOf(phone.value), btn = $("submitBtn");
+  if (d.length !== 10) {
+    err.textContent = "Проверьте номер: нужно 10 цифр после +7";
+    phone.setAttribute("aria-invalid", "true");
+    phone.focus();
+    return;
+  }
+  btn.disabled = true;
+  const trap = e.target.website.value;
+  const sent = await sendLead({
+    phone: "+7" + d, channel: "call", source: "podarok", page: location.pathname,
+    promo: personal.code, gift_status: status, answers: answersText(),
+    gift_deadline: samaraDate(personal.deadline) + " (Самара)",
+    ...(trap ? { website: trap } : {})
+  });
+  if (!sent) {
+    goal("lead_error", { form: "podarok" });
+    btn.disabled = false;
+    err.textContent = `Не получилось отправить. Попробуйте ещё раз или позвоните: ${SITE.phoneText}`;
+    return;
+  }
+  goal("podarok_lead", { gift_status: status });
+  goal("lead", { form: "podarok", channel: "call" });
+  const gift = status === "active";
+  $("doneTitle").innerHTML = gift
+    ? `Подарок закреплён за вами. Ваш промокод: <span class="num">${personal.code}</span>`
+    : `Заявка принята — перезвоним на ${formatPhone(d)}`;
+  $("doneReels").innerHTML = reelsHtml(INDUSTRY[industry].videos);
+  $("objects").hidden = true;
+  if (cfg.max_bot_url) {
+    const u = new URL(cfg.max_bot_url);
+    u.searchParams.set("start", personal.code);
+    $("maxBot").href = u;
+    $("maxBot").hidden = false;
+  }
+  $("formArea").hidden = true;
+  $("meter").hidden = true;
+  $("done").hidden = false;
+  $("done").scrollIntoView({ block: "nearest" });
+});
+
+/* ---------- Мессенджеры: готовый текст; WhatsApp — в ссылке, Telegram и MAX — через буфер ---------- */
+function copyText(text){
+  try { navigator.clipboard.writeText(text).catch(fallback); } catch { fallback(); }
+  function fallback(){
+    const t = document.createElement("textarea");
+    t.value = text; t.setAttribute("readonly", ""); t.style.cssText = "position:fixed;opacity:0";
+    document.body.appendChild(t); t.select();
+    try { document.execCommand("copy"); } catch {}
+    t.remove();
+  }
+}
+$$("[data-msg]").forEach(a => a.addEventListener("click", () => {
+  const ans = answersText();
+  const text = status === "active"
+    ? `Здравствуйте! Хочу закрепить подарок, промокод ${personal.code}.${ans ? " " + ans + "." : ""}`
+    : `Здравствуйте! Хочу получить смету.${ans ? " " + ans + "." : ""}`;
+  if (a.dataset.msg === "whatsapp") a.href = `${SITE.whatsapp}?text=${encodeURIComponent(text)}`;
+  else { copyText(text); $("toast").hidden = false; }
+  goal("podarok_msg", { messenger: a.dataset.msg, gift_status: status });
+  goal("messenger_click", { messenger: a.dataset.msg });
+}));
+document.addEventListener("click", e => {
+  if (e.target.closest('a[href^="tel:"]')) { goal("podarok_call"); goal("call_click"); }
+}, true);
+</script>
+</body>
+</html>
