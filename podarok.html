@@ -76,6 +76,7 @@ button{cursor:pointer;background:none;border:0}
 h1{margin-top:18px;font-size:clamp(27px,7.2vw,48px);line-height:1.1;font-weight:800;letter-spacing:-.015em}
 .hook{margin-top:10px;font-size:clamp(19px,5vw,26px);line-height:1.25;font-weight:700;color:var(--accent-hi)}
 .sub{margin-top:10px;font-size:clamp(15px,4vw,18px);color:var(--soft)}
+.old-price{color:var(--muted);text-decoration-thickness:2px;text-decoration-color:var(--accent-hi);white-space:nowrap}
 
 .meter{display:grid;gap:12px;margin-top:18px;padding:14px 16px;border-radius:var(--r);background:rgba(11,15,20,.55);border:1px solid rgba(224,138,30,.38);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
 .m-label{display:block;font-size:13px;color:var(--soft)}
@@ -235,8 +236,8 @@ h1{margin-top:18px;font-size:clamp(27px,7.2vw,48px);line-height:1.1;font-weight:
       <a class="rating" data-yandex-link target="_blank" rel="noopener"><svg width="16" height="16"><use href="#i-star"/></svg><span><b>5,0</b> на Яндекс Картах, <span id="reviews">41 отзыв</span></span></a>
 
       <h1 id="title">Ещё выбираете, кто установит видеонаблюдение?</h1>
-      <p class="hook" id="hook">Мы придержали для вас регистратор в подарок</p>
-      <p class="sub" id="sub">Регистратор — бесплатно при установке от&nbsp;4&nbsp;камер под&nbsp;ключ.</p>
+      <p class="hook" id="hook">Мы придержали для вас цифровой (IP) регистратор в&nbsp;подарок</p>
+      <p class="sub" id="sub">Обычная цена <s class="old-price">9&nbsp;990&nbsp;₽</s> — для вас бесплатно при установке от&nbsp;4&nbsp;камер под&nbsp;ключ.</p>
 
       <div class="meter" id="meter">
         <div class="meter-item" id="timerBox">
@@ -312,8 +313,7 @@ h1{margin-top:18px;font-size:clamp(27px,7.2vw,48px);line-height:1.1;font-weight:
         <!-- ПРОВЕРИТЬ У ЮРИСТА: весь текст условий акции -->
         <details class="terms">
           <summary>Условия акции</summary>
-          <p>Подарок — 9-канальный сетевой видеорегистратор при установке системы видеонаблюдения под ключ от <span id="tMin">4</span> камер (оборудование и монтаж — «Мой Дозор»), если договор заключён в течение 30 дней с даты заявки. Подарок закрепляется за заявкой, оставленной до окончания личного срока на этой странице. Один подарок на договор. Количество ограничено: <span id="tTotal">[N]</span> в месяц.
-            <!-- ПРОВЕРИТЬ: решение владельца -->[Суммируется / не суммируется] со скидкой 5 % при 100 % предоплате.
+          <p>Подарок — 9-канальный цифровой (IP) видеорегистратор при установке системы видеонаблюдения под ключ от <span id="tMin">4</span> камер (оборудование и монтаж — «Мой Дозор»), если договор заключён в течение 30 дней с даты заявки. Подарок закрепляется за заявкой, оставленной до окончания личного срока на этой странице. Один подарок на договор. Количество ограничено: <span id="tTotal">[N]</span> в месяц.
             Организатор: ИП Февралев И. Н., ОГРНИП 316631300090117.</p>
         </details>
         <p class="consent">Нажимая кнопку, вы даёте <a href="consent.html">согласие на обработку персональных данных</a> и соглашаетесь с <a href="policy.html">политикой</a>.</p>
@@ -358,7 +358,7 @@ const SITE = {
   tzOffset: 4
 };
 // Если файл конфига не загрузился — эти значения (держать такими же, как в podarok-config.json)
-const CONFIG_DEFAULT = { month: "2026-10", gifts_total: 10, gifts_left: 7, min_cameras: 4, reviews_count: 41, max_bot_url: "", active: true };
+const CONFIG_DEFAULT = { month: "2026-10", gifts_total: 10, gifts_left: 7, min_cameras: 4, gift_price_rub: 9990, reviews_count: 41, max_bot_url: "", active: true };
 
 // Видео с объектов. cams — число камер (null — неизвестно, тогда подпись без него). Названия клиентов не писать.
 const VIDEOS = {
@@ -484,7 +484,8 @@ function render(){
   const gift = status === "active";
   $("title").textContent = status === "expired" ? "Срок подарка закончился" : INDUSTRY[startIndustry].h1;
   $("hook").hidden = !gift;
-  $("sub").textContent = gift ? `Регистратор — бесплатно при установке от\u00A0${cfg.min_cameras > 0 ? cfg.min_cameras : 4}\u00A0камер под\u00A0ключ.` : "Но смету пришлём, как и раньше.";
+  const price = cfg.gift_price_rub > 0 ? `Обычная цена <s class="old-price">${Number(cfg.gift_price_rub).toLocaleString("ru-RU")}\u00A0₽</s> — для вас бесплатно` : "Бесплатно";
+  $("sub").innerHTML = gift ? `${price} при установке от\u00A0${cfg.min_cameras > 0 ? cfg.min_cameras : 4}\u00A0камер под\u00A0ключ.` : "Но смету пришлём, как и раньше.";
   $("sub").hidden = status === "off";
   $("meter").hidden = !(gift || status === "sold_out");
   $("timerBox").hidden = !gift;
