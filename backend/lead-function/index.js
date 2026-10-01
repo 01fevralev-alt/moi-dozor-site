@@ -99,6 +99,35 @@ function salesStage() {
   return findStage(env("AMO_PIPELINE"), env("AMO_STATUS"));
 }
 
+// Рекламные метки — во встроенные поля статистики сделки (utm_*, yclid, ClientID Метрики).
+// Пишем только в поля, которые есть в этой amoCRM: поле с чужим кодом amoCRM не примет, и сделка не создастся.
+const TRACKING = { utm_source: "UTM_SOURCE", utm_medium: "UTM_MEDIUM", utm_campaign: "UTM_CAMPAIGN",
+  utm_content: "UTM_CONTENT", utm_term: "UTM_TERM", yclid: "YCLID", ym_uid: "_YM_UID" };
+let leadFields = null;
+function leadFieldIds() {
+  if (!leadFields) leadFields = (async () => {
+    const byCode = {};
+    for (let page = 1; page <= 5; page++) {
+      const data = await amoApi(`/api/v4/leads/custom_fields?limit=250&page=${page}`);
+      const list = data?._embedded?.custom_fields || [];
+      list.forEach(f => { if (f.code) byCode[String(f.code).toUpperCase()] = f.id; });
+      if (!data?._links?.next) break;
+    }
+    const missing = Object.values(TRACKING).filter(c => !byCode[c]);
+    if (missing.length) console.warn(`В amoCRM нет полей сделки с кодами: ${missing.join(", ")} — эти метки остаются только в примечании`);
+    return byCode;
+  })().catch(e => { leadFields = null; console.warn(`Поля сделок amoCRM не получены: ${e.message}`); return {}; });
+  return leadFields;
+}
+async function trackingValues(lead) {
+  const values = { ...lead.ad, ym_uid: lead.ym_uid };
+  if (!Object.values(values).some(Boolean)) return [];
+  const ids = await leadFieldIds();
+  return Object.entries(TRACKING)
+    .filter(([key, code]) => values[key] && ids[code])
+    .map(([key, code]) => ({ field_id: ids[code], values: [{ value: String(values[key]) }] }));
+}
+
 // Сделка с контактом, тегами и примечанием. deal: { name, tags, contact: {name, phone}, stage: Promise<{pipeline_id, status_id}>, note }
 async function toAmo(d) {
   const deal = {
@@ -114,8 +143,18 @@ async function toAmo(d) {
   const { pipeline_id, status_id } = await d.stage.catch(e => { console.warn(`Этапы amoCRM не получены: ${e.message}`); return {}; });
   if (pipeline_id) deal.pipeline_id = pipeline_id;
   if (status_id) deal.status_id = status_id;
+  const fields = d.contact.ad ? await trackingValues(d.contact) : [];
+  if (fields.length) deal.custom_fields_values = fields;
 
-  const [created] = await amoApi("/api/v4/leads/complex", [deal]);
+  let created;
+  try { [created] = await amoApi("/api/v4/leads/complex", [deal]); }
+  catch (e) {
+    if (!deal.custom_fields_values) throw e;
+    // Метки не приняты — сделку всё равно создаём, метки остаются в примечании
+    console.warn(`amoCRM не приняла метки, сделка без них: ${e.message}`);
+    delete deal.custom_fields_values;
+    [created] = await amoApi("/api/v4/leads/complex", [deal]);
+  }
   const id = created?.id;
   if (id && d.note) await amoApi(`/api/v4/leads/${id}/notes`, [{ note_type: "common", params: { text: d.note } }]).catch(() => {});
   return id;
