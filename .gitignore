@@ -1,3 +1,26 @@
 .DS_Store
 data/
 /video/
+
+# --- защита секретов и служебные файлы ---
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+credentials*
+secrets*
+token*
+node_modules/
+venv/
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.cache/
+dist/
+build/
+.DS_Store
+CLAUDE.local.md

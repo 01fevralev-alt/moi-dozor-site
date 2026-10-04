@@ -5,6 +5,7 @@
 //   ?key=…               → {"ok":true,"hello":"Мой Дозор"} — проверка
 //   ?key=…&folder=ID     → список фото папки объекта (с вложенными папками до 2 уровней)
 //   ?key=…&file=ID       → одно фото в base64
+//   ?key=…&changed=ISO   → фото внутри ROOT, изменённые/загруженные после этого времени (UTC), с цепочкой папок до ROOT
 // После правок кода: «Начать развертывание» → «Управление развертываниями» → ✏️ → «Новая версия» (адрес не меняется).
 
 const SECRET = "ВСТАВЬТЕ-СЮДА-ПАРОЛЬ";         // в репозитории пароля нет — он только в скрипте и в функции
@@ -19,6 +20,21 @@ function doGet(e) {
       const folder = DriveApp.getFolderById(p.folder);
       if (!inside(folder)) return json({ ok: false, error: "outside" });
       return json({ ok: true, files: images(folder, 0) });
+    }
+    if (p.changed) {
+      // Новые фото за период: для каждой — папки от неё вверх до ROOT (функция по ним находит сделку)
+      const since = new Date(p.changed);
+      if (isNaN(since)) return json({ ok: false, error: "changed" });
+      const it = DriveApp.searchFiles('modifiedDate > "' + since.toISOString().slice(0, 19) + '" and mimeType contains "image/" and trashed = false');
+      const out = [];
+      let n = 0;
+      while (it.hasNext() && n < 1000) {
+        const f = it.next();
+        n++;
+        const chain = folderChain(f);
+        if (chain) out.push({ id: f.getId(), name: f.getName(), date: f.getLastUpdated().toISOString(), folders: chain });
+      }
+      return json({ ok: true, files: out });
     }
     if (p.file) {
       const file = DriveApp.getFileById(p.file);
@@ -64,6 +80,21 @@ function inside(item) {
     level = next;
   }
   return false;
+}
+
+// Папки над файлом до ROOT (ближайшая — первая); null — файл не внутри ROOT
+function folderChain(item) {
+  const chain = [];
+  let cur = item;
+  for (let i = 0; i < 8; i++) {
+    const parents = cur.getParents();
+    if (!parents.hasNext()) return null;
+    const p = parents.next();
+    if (p.getId() === ROOT) return chain;
+    chain.push(p.getId());
+    cur = p;
+  }
+  return null;
 }
 
 function json(data) {

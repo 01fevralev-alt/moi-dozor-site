@@ -159,14 +159,18 @@ const drive = params => httpJson(`${env("DRIVE_SCRIPT_URL")}?key=${encodeURIComp
   });
 
 // Список фото папки: без дублей, по времени; если много — равномерно из всей съёмки (разные точки объекта)
-async function listPhotos(folder) {
+// prefer — id новых фото на Диске: они попадают в черновик в любом случае
+async function listPhotos(folder, prefer = []) {
   if (!folder) return [];
   const { files } = await drive(`folder=${encodeURIComponent(folder)}`);
   const seen = new Set();
   const all = files.filter(f => { const k = `${f.name}|${f.size}`; if (seen.has(k)) return false; seen.add(k); return true; })
     .sort((a, b) => (a.date + a.name).localeCompare(b.date + b.name));
   if (all.length <= MAX_PHOTOS) return all;
-  return Array.from({ length: MAX_PHOTOS }, (_, i) => all[Math.round(i * (all.length - 1) / (MAX_PHOTOS - 1))]);
+  const fresh = all.filter(f => prefer.includes(f.id)).slice(0, MAX_PHOTOS);
+  const rest = all.filter(f => !prefer.includes(f.id)), k = MAX_PHOTOS - fresh.length;
+  const picked = k <= 0 ? [] : k === 1 ? [rest[0]] : Array.from({ length: k }, (_, i) => rest[Math.round(i * (rest.length - 1) / (k - 1))]);
+  return [...new Set([...picked, ...fresh])].filter(Boolean).sort((a, b) => (a.date + a.name).localeCompare(b.date + b.name));
 }
 
 // Фото для сайта: 1600 px по длинной стороне, webp. Превью для MAX: 640 px с крупным номером в углу.
@@ -332,6 +336,7 @@ function draftText(d) {
   const lines = [
     `📝 <b>${d.update ? "Обновление кейса" : "Черновик кейса"}${d.pos ? ` ${d.pos}` : ""}</b> · <a href="https://${esc(amoDomain())}/leads/detail/${d.lead}">сделка №${d.lead}</a>`,
     ...(d.textFromSite ? [`♻️ Текст${d.photosFromSite ? " и фото" : ""} — как на сайте; из CRM обновлены цифры и даты. Переписать текст — ответьте, например, «перепиши».`] : []),
+    ...(d.fresh?.length ? [`🆕 <b>Новые фото на Диске:</b> ${d.fresh.join(", ")} — уже включены`] : []),
     photos, "",
     `Тип: ${esc(c.type)} · Город: ${esc(c.city)}`,
     ...FIELDS.map(([label, k]) => `${label}: ${esc(Array.isArray(c[k]) ? c[k].join(" ") : c[k]) || "—"}`),
@@ -396,7 +401,9 @@ async function buildDraft(leadId, { update = false } = {}) {
   const raw = await readLead(leadId);
   const old = await getJson(`drafts/${leadId}.json`);
   const published = await getJson(`published/${leadId}.json`);
-  const photos = await listPhotos(raw.folder).catch(e => { console.error(e); return []; });
+  // Новые фото, найденные проверкой Диска (freshScan): в черновике включены и отмечены
+  const freshIds = (await getJson(`fresh/${leadId}.json`))?.ids || [];
+  const photos = await listPhotos(raw.folder, freshIds).catch(e => { console.error(e); return []; });
   const d = {
     lead: leadId, status: "draft", update: update || Boolean(published), slug: published?.slug || null,
     created: new Date().toISOString(), raw, case: null, photos: [], off: [], cover: 1
@@ -442,6 +449,13 @@ async function buildDraft(leadId, { update = false } = {}) {
     d.off = (old.off || []).map(was).filter(Boolean);
     d.cover = was(old.cover) || d.cover;
     if (d.off.includes(d.cover)) d.cover = used(d)[0]?.n || 1;
+  }
+  if (freshIds.length) {
+    d.fresh = d.photos.filter(p => freshIds.includes(p.drive)).map(p => p.n);
+    d.off = d.off.filter(n => !d.fresh.includes(n));
+    if (!d.photos.some(p => p.n === d.cover) || d.off.includes(d.cover)) d.cover = used(d)[0]?.n || 1;
+    await del(`fresh/${leadId}.json`);
+    await del(`waiting/${leadId}.json`);
   }
   d.story = old?.story || "";
   d.addrManual = old?.addrManual || false;
@@ -678,6 +692,87 @@ async function onReply(msg) {
   await putJson(`drafts/${d.lead}.json`, d);
 }
 
+/* ---------- Новые фото на Диске у сданных объектов → черновик (новый или обновление кейса) ---------- */
+// Раз в SCAN_MIN минут спрашиваем скрипт Диска, какие фото появились с прошлой проверки, и по папкам находим сделки.
+// Сделка берётся, если монтаж уже был (даты монтажа) или она на «Проверено» / «Успешно реализовано».
+// Пока в папку ещё грузят (последнее фото моложе SETTLE_MIN минут) — ждём, чтобы не собирать черновик по половине фото.
+// Состояние: scan.json { last }, pending.json { сделка: { ids, at } }, folders.json — папка → сделка (из amoCRM раз в 12 часов).
+const SCAN_MIN = 10, SETTLE_MIN = 10;
+async function folderMap(force) {
+  const cached = await getJson("folders.json");
+  if (cached && !force && Date.now() - cached.built < 12 * 3600e3) return cached;
+  const map = {}, done = {};
+  for (let page = 1; page <= 40; page++) {
+    const r = await amo(`/api/v4/leads?limit=250&page=${page}`);   // пустая страница — 204 без тела → {}
+    const leads = r?._embedded?.leads || [];
+    for (const lead of leads) {
+      const link = String(field(lead, "Папка Контент") || "");
+      const folder = (link.match(/folders\/([\w-]+)/) || link.match(/[?&]id=([\w-]+)/) || [])[1];
+      if (!folder) continue;
+      map[folder] = lead.id;
+      done[lead.id] = Boolean(field(lead, "Дата начала монтажа") || field(lead, "Дата окончания монтажа")) || lead.status_id === 142;
+    }
+    if (!r?._links?.next) break;
+  }
+  const statuses = await amo("/api/v4/leads/pipelines").then(p => (p._embedded?.pipelines || [])
+    .flatMap(x => x._embedded?.statuses || []).filter(s => /провер/i.test(s.name)).map(s => s.id)).catch(() => []);
+  const out = { built: Date.now(), map, done, checked: statuses };
+  await putJson("folders.json", out);
+  return out;
+}
+
+async function freshScan() {
+  const scan = await getJson("scan.json");
+  const now = Date.now();
+  if (scan && now - scan.last < SCAN_MIN * 60e3) return;
+  // Первый запуск — только запоминаем время: старые фото не присылаем пачкой (для них есть «кейс N»)
+  if (!scan) return putJson("scan.json", { last: now });
+  const { files = [] } = await drive(`changed=${encodeURIComponent(new Date(scan.last - 60e3).toISOString())}`);
+  await putJson("scan.json", { last: now });
+  const pending = (await getJson("pending.json")) || {};
+  if (files.length) {
+    let fm = await folderMap();
+    // Папка незнакома — возможно, сделку завели недавно: перечитываем amoCRM (не чаще раза в час)
+    if (files.some(f => !f.folders.some(id => fm.map[id])) && now - fm.built > 3600e3) fm = await folderMap(true);
+    for (const f of files) {
+      const lead = f.folders.map(id => fm.map[id]).find(Boolean);
+      if (!lead) continue;
+      const p = pending[lead] || (pending[lead] = { ids: [], at: 0 });
+      if (!p.ids.includes(f.id)) p.ids.push(f.id);
+      p.at = Math.max(p.at, Date.parse(f.date) || now);
+    }
+  }
+  const ready = Object.keys(pending).map(Number).filter(l => now - pending[l].at > SETTLE_MIN * 60e3);
+  if (!ready.length) return Object.keys(pending).length ? putJson("pending.json", pending) : del("pending.json");
+  const fm = await folderMap();
+  const take = [];
+  for (const lead of ready) {
+    const ids = pending[lead].ids;
+    delete pending[lead];
+    const d = await getJson(`drafts/${lead}.json`);
+    const eligible = fm.done[lead] || d || await getJson(`published/${lead}.json`) ||
+      await amo(`/api/v4/leads/${lead}`).then(l => l.status_id === 142 || fm.checked.includes(l.status_id)).catch(() => false);
+    if (!eligible) continue;                                       // объект ещё не смонтирован — фото с осмотра и т.п.
+    const prev = (await getJson(`fresh/${lead}.json`))?.ids || [];
+    await putJson(`fresh/${lead}.json`, { ids: [...new Set([...prev, ...ids])] });
+    take.push({ lead, n: ids.length });
+  }
+  Object.keys(pending).length ? await putJson("pending.json", pending) : await del("pending.json");
+  if (!take.length) return;
+  const b = await getJson(BATCH);
+  const ids = take.map(t => t.lead).filter(l => !b?.list?.includes(l) || b.list.indexOf(l) < b.done);
+  const what = take.map(t => `№${t.lead} (+${t.n} фото)`).join(", ");
+  if (b?.list?.length) {
+    b.list.push(...ids.filter(l => !b.list.slice(b.done).includes(l)));
+    await putJson(BATCH, b);
+    return say(`📷 Новые фото на Диске: ${what}. Добавил в очередь — пришлю после текущих черновиков.`);
+  }
+  if (!ids.length) return;
+  await putJson(BATCH, { list: ids, done: 0, current: ids[0] });
+  await queue("build", ids[0], { update: true });
+  await say(`📷 Новые фото на Диске: ${what}. ${ids.length > 1 ? "Пришлю черновики по одному, первый" : "Черновик"} — через 1–2 минуты.`);
+}
+
 /* ---------- Таймер: задания из очереди и проверка «ждём фото» ---------- */
 async function worker() {
   const t0 = Date.now();
@@ -713,6 +808,8 @@ async function worker() {
     const photos = raw ? await listPhotos(raw.folder).catch(() => []) : [];
     if (photos.length) { await del(key); await queue("build", lead, { update: true }); }
   }
+  // Новые фото у сданных объектов — ошибка здесь не должна мешать остальному
+  await freshScan().catch(e => console.error("freshScan", e));
 }
 
 /* ---------- Проверка настроек: открыть адрес функции с ?setup=1&s=HOOK_SECRET ---------- */
@@ -726,6 +823,11 @@ async function setup(selfUrl) {
     check("YandexGPT", async () => { await gpt('Ответь JSON {"ok":true}'); }),
     check("amoCRM", async () => ` — ${(await amo("/api/v4/account")).name}`),
     check("Скрипт Google Диска", async () => { await drive("ping=1"); }),
+    check("Скрипт Google Диска: поиск новых фото", async () => {
+      const r = await drive(`changed=${encodeURIComponent(new Date(Date.now() - 864e5).toISOString())}`);
+      if (!Array.isArray(r.files)) throw new Error("старая версия скрипта — разверните новую версию «Мой Дозор фото»");
+      return ` — за сутки: ${r.files.length}`;
+    }),
     check("GitHub", async () => { await ghFile("cases.json"); }),
     check("MAX: подписка бота на события", async () => {
       const { subscriptions = [] } = await max("/subscriptions");
