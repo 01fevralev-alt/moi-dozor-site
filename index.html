@@ -642,11 +642,10 @@ h3{font-weight:700;letter-spacing:-.025em;line-height:1.15}
 .rev-badge .stars svg{width:20px;height:20px}
 .rev-rows{margin-top:56px;display:flex;flex-direction:column;gap:18px;
   -webkit-mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent);mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent)}
-.rev-row{display:flex;gap:18px;width:max-content;animation:revscroll var(--dur,140s) linear infinite}
-.rev-row.r2{animation-direction:reverse}
-.rev-rows:hover .rev-row{animation-play-state:paused}
-@keyframes revscroll{to{transform:translateX(-50%)}}
-@media (prefers-reduced-motion:reduce){.rev-rows{overflow-x:auto;-webkit-mask-image:none;mask-image:none}.rev-row{animation:none}.rev-row .dup{display:none}}
+/* лента — обычная горизонтальная прокрутка: едет сама (скрипт «Reviews»), пальцем/тачпадом листается в обе стороны */
+.rev-row{display:flex;gap:18px;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:none;padding-block:4px;margin-block:-4px}
+.rev-row::-webkit-scrollbar{display:none}
+@media (prefers-reduced-motion:reduce){.rev-rows{-webkit-mask-image:none;mask-image:none}.rev-row .dup{display:none}}
 .dup{display:contents}
 .rcard{flex:none;width:360px;display:flex;flex-direction:column;gap:14px;padding:24px 24px 20px;border-radius:20px;border:1px solid var(--line);
   background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,0) 40%),var(--surface);transition:border-color .15s,transform .15s}
@@ -2021,8 +2020,47 @@ function swipe(el, step){
   [list.filter((_, i) => i % 2 === 0), list.filter((_, i) => i % 2 === 1)].forEach((items, i) => {
     if (!rows[i]) return;
     const html = items.map(card).join("");
-    rows[i].innerHTML = html + `<div class="dup" aria-hidden="true">${html.replaceAll('<a class="rcard', '<a tabindex="-1" class="rcard')}</div>`;
+    const dup = `<div class="dup" aria-hidden="true">${html.replaceAll('<a class="rcard', '<a tabindex="-1" class="rcard')}</div>`;
+    rows[i].innerHTML = html + dup + dup; // три копии: есть куда листать в обе стороны, пока лента не перескочит
+    if (!matchMedia("(prefers-reduced-motion:reduce)").matches) autoScroll(rows[i], i ? -1 : 1);
   });
+
+  // Сама едет со скоростью «круг за --dur секунд»; от касания, колёсика или наведения мыши — пауза,
+  // через 2 секунды после последнего движения пальцем едет дальше. Перескок на копию — только когда никто не трогает.
+  function autoScroll(el, dir){
+    let W = 0, pos = 0, last = 0, hold = 0, hover = false, seen = true, held = false;
+    const dur = parseFloat(el.style.getPropertyValue("--dur")) || 240;
+    const measure = () => {
+      const cards = el.querySelectorAll(".rcard"), n = cards.length / 3;
+      const w = cards[n].offsetLeft - cards[0].offsetLeft;
+      if (!w) return;
+      pos = W ? pos / W * w : w; W = w; el.scrollLeft = pos;
+    };
+    const touch = () => { hold = performance.now() + 2000; };
+    el.addEventListener("pointerdown", touch, { passive: true });
+    el.addEventListener("touchstart", touch, { passive: true });
+    el.addEventListener("touchmove", touch, { passive: true });
+    el.addEventListener("wheel", touch, { passive: true });
+    el.addEventListener("mouseenter", () => hover = true);
+    el.addEventListener("mouseleave", () => hover = false);
+    // прокрутил человек (а не мы) — запоминаем, где он остановился
+    el.addEventListener("scroll", () => { if (Math.abs(el.scrollLeft - pos) > 2) { pos = el.scrollLeft; touch(); } }, { passive: true });
+    new IntersectionObserver(([e]) => seen = e.isIntersecting).observe(el);
+    addEventListener("resize", measure);
+    measure();
+    const step = t => {
+      const dt = Math.min(t - (last || t), 100) / 1000; last = t;
+      if (W && seen && !hover && t > hold) {
+        if (held) { pos = el.scrollLeft; held = false; } // продолжаем с того места, где отпустили
+        pos += dir * W / dur * dt;
+        if (pos > 1.5 * W) pos -= W;
+        if (pos < 0.5 * W) pos += W;
+        el.scrollLeft = pos;
+      } else held = true;
+      requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }
 })();
 
 /* ---------- Cases gallery: big cards and the strip, both swipe; the strip follows the big card ---------- */
