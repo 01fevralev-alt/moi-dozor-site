@@ -2017,8 +2017,8 @@ function swipe(el, step){
       <div class="rc-foot"><span class="rc-who"><span class="rc-ava" aria-hidden="true">${esc(n[0].toUpperCase())}</span><span>${esc(n)}</span></span>
       <span class="rc-src">${r.truncated ? "Читать полностью ↗" : "Яндекс Карты ↗"}</span></div></a>`;
   };
-  const half = Math.ceil(list.length / 2);
-  [list.slice(0, half), list.slice(half)].forEach((items, i) => {
+  // Отзывы с выделенной фразой идут в начале файла — раскладываем через один, чтобы они были в обеих лентах
+  [list.filter((_, i) => i % 2 === 0), list.filter((_, i) => i % 2 === 1)].forEach((items, i) => {
     if (!rows[i]) return;
     const html = items.map(card).join("");
     rows[i].innerHTML = html + `<div class="dup" aria-hidden="true">${html.replaceAll('<a class="rcard', '<a tabindex="-1" class="rcard')}</div>`;
