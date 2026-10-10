@@ -48,6 +48,7 @@ ym(99939047, "init", { webvisor: true, clickmap: true, trackLinks: true, accurat
   --accent:#E08A1E;
   --accent-hi:#F2A13A;
   --accent-lo:#C66F0E;
+  --accent-rgb:224,138,30;
   --glow:rgba(224,138,30,.55);
   --online:#2BD46A;
   --rec:#FF3B30;
@@ -273,7 +274,8 @@ body.modal-open{overflow:hidden}
 .sec{position:relative;isolation:isolate;padding-top:120px;scroll-margin-top:0}
 .sec::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;
   background:radial-gradient(38% 42% at var(--lx,6%) 28%,rgba(224,138,30,.06),transparent 70%),radial-gradient(40% 45% at var(--rx,94%) 78%,rgba(80,120,160,.07),transparent 70%)}
-.sec:nth-of-type(odd){--lx:94%;--rx:6%;--gx:28%;--gy:38%}
+/* even, а не odd: перед секциями стоит блок отзывов (тоже <section>), чётность сдвинулась на один */
+.sec:nth-of-type(even){--lx:94%;--rx:6%;--gx:28%;--gy:38%}
 .sec:not(.light)::after{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;opacity:.45;
   background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);background-size:72px 72px;background-position:center 0;
   -webkit-mask-image:radial-gradient(55% 60% at var(--gx,72%) var(--gy,32%),#000 10%,transparent 75%);mask-image:radial-gradient(55% 60% at var(--gx,72%) var(--gy,32%),#000 10%,transparent 75%)}
@@ -624,6 +626,45 @@ h3{font-weight:700;letter-spacing:-.025em;line-height:1.15}
 .foot .foot-lead a{color:var(--accent-hi)}
 .foot-hours{font-weight:300;color:var(--muted)}
 
+/* ---------- Reviews: two rows of Yandex Maps reviews scrolling in opposite directions (data — reviews.json) ---------- */
+.rev{position:relative;padding-top:120px;isolation:isolate;overflow:hidden;scroll-margin-top:0}
+.rev::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(40% 50% at 85% 20%,rgba(var(--accent-rgb),.10),transparent 70%)}
+.rev-head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:24px 40px}
+.rev h2{font-weight:800;font-size:clamp(38px,4.6vw,72px);line-height:.98;letter-spacing:-.04em;max-width:12em}
+.rev h2 em{font-style:normal;color:var(--accent-hi)}
+.rev-badge{display:flex;align-items:center;gap:18px;padding:16px 22px;border:1px solid var(--line-2);border-radius:var(--r);background:var(--glass);transition:border-color .15s,background .15s}
+.rev-badge:hover{border-color:var(--accent);background:rgba(var(--accent-rgb),.08)}
+.rev-score{font-size:44px;font-weight:800;letter-spacing:-.03em;line-height:1}
+.rev-badge small{display:block;color:var(--muted);font-size:14px;margin-top:4px}
+.rev-badge b{font-weight:700;font-size:16px;color:var(--text)}
+.stars{display:inline-flex;gap:2px;color:var(--accent-hi)}
+.stars svg{width:16px;height:16px}
+.rev-badge .stars svg{width:20px;height:20px}
+.rev-rows{margin-top:56px;display:flex;flex-direction:column;gap:18px;
+  -webkit-mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent);mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent)}
+.rev-row{display:flex;gap:18px;width:max-content;animation:revscroll var(--dur,140s) linear infinite}
+.rev-row.r2{animation-direction:reverse}
+.rev-rows:hover .rev-row{animation-play-state:paused}
+@keyframes revscroll{to{transform:translateX(-50%)}}
+@media (prefers-reduced-motion:reduce){.rev-rows{overflow-x:auto;-webkit-mask-image:none;mask-image:none}.rev-row{animation:none}.rev-row .dup{display:none}}
+.dup{display:contents}
+.rcard{flex:none;width:360px;display:flex;flex-direction:column;gap:14px;padding:24px 24px 20px;border-radius:20px;border:1px solid var(--line);
+  background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,0) 40%),var(--surface);transition:border-color .15s,transform .15s}
+.rcard:hover{border-color:rgba(var(--accent-rgb),.55);transform:translateY(-3px)}
+.rc-top{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--muted)}
+.rc-hl{font-size:21px;font-weight:700;line-height:1.2;letter-spacing:-.02em;color:var(--text)}
+.rc-hl::before{content:"«";color:var(--accent-hi)}.rc-hl::after{content:"»";color:var(--accent-hi)}
+.rc-text{font-size:15px;line-height:1.5;color:var(--soft);display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:5;overflow:hidden;white-space:pre-line}
+.rcard.has-hl .rc-text{-webkit-line-clamp:3;color:var(--muted)}
+.rc-foot{margin-top:auto;display:flex;align-items:center;justify-content:space-between;gap:10px;padding-top:12px;border-top:1px solid var(--line)}
+.rc-who{display:flex;align-items:center;gap:10px;min-width:0;font-weight:600;font-size:15px}
+.rc-who>span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rc-ava{display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:rgba(var(--accent-rgb),.14);color:var(--accent-hi);font-weight:700;font-size:15px;flex:none}
+.rc-src{font-size:13px;color:var(--muted);white-space:nowrap}
+.rcard:hover .rc-src{color:var(--accent-hi)}
+.rev-more{margin-top:40px;display:flex;flex-wrap:wrap;align-items:center;gap:14px 24px;color:var(--muted);font-size:15px}
+.rev-more a{color:var(--accent-hi);border-bottom:1px solid rgba(var(--accent-rgb),.4);font-weight:600}
+
 /* ---------- Responsive ---------- */
 @media (max-width:1439px){
   .pains{grid-template-columns:repeat(2,1fr)}
@@ -665,7 +706,7 @@ h3{font-weight:700;letter-spacing:-.025em;line-height:1.15}
   .mbar .icon-btn{width:56px;height:56px;background:var(--surface-2);border-radius:var(--r);box-shadow:0 10px 30px rgba(0,0,0,.45)}
   .mbar.is-hidden{transform:translateY(160%);opacity:0;pointer-events:none}
   .cookie{left:12px;right:12px;max-width:none;bottom:calc(max(12px,env(safe-area-inset-bottom)) + 68px)}
-  .sec{scroll-margin-top:64px}
+  .sec,.rev{scroll-margin-top:64px}
   .hero{min-height:0;display:block}
   .hero-grid{grid-template-columns:1fr;gap:0}
   .hero-in{padding-block:110px 0}
@@ -704,6 +745,11 @@ h3{font-weight:700;letter-spacing:-.025em;line-height:1.15}
   .sec.light{margin-top:64px;padding-block:64px}
   .sec.light + .sec{padding-top:72px}
   .sec{padding-top:80px}
+  .rev{padding-top:72px}
+  .rev-rows{margin-top:36px}
+  .rcard{width:290px;padding:20px}
+  .rc-hl{font-size:19px}
+  .rev-score{font-size:36px}
   .sec-sub{font-size:16px}
   .filter{flex-wrap:nowrap;overflow-x:auto;margin:0 -16px;padding:0 16px 4px;scrollbar-width:none}
   .filter::-webkit-scrollbar{display:none}
@@ -864,6 +910,7 @@ h3{font-weight:700;letter-spacing:-.025em;line-height:1.15}
   </a>
   <nav class="nav" aria-label="Разделы">
     <a href="#top" data-nav>Главная</a>
+    <a href="#reviews" data-nav>Отзывы</a>
     <a href="#tasks" data-nav>Задачи бизнеса</a>
     <a href="#quality" data-nav>Качество записи</a>
     <a href="#result" data-nav>Что вы получите</a>
@@ -957,6 +1004,23 @@ h3{font-weight:700;letter-spacing:-.025em;line-height:1.15}
       <div class="fig"><div class="fig-v"><span class="cnt" data-to="96">96</span><small>%</small></div><p class="fig-l">объектов без гарантийных выездов</p></div>
       <div class="fig"><div class="fig-v"><span class="cnt" data-to="3">3</span><small>дня</small></div><p class="fig-l">средний срок монтажа</p></div>
     </div>
+  </section>
+
+  <!-- ============ 2a. Reviews ============ -->
+  <!-- Карточки заполняются из reviews.json (скрипт «Reviews»); клики по карточкам и бейджу — цель reviews_click (data-yandex-link) -->
+  <section class="rev" id="reviews" aria-labelledby="h-rev">
+    <div class="wrap rev-head">
+      <h2 id="h-rev"><span data-rev-rating>5,0</span> на Яндексе. <em>Проверьте&nbsp;сами</em></h2>
+      <a class="rev-badge" data-yandex-link target="_blank" rel="noopener">
+        <span class="rev-score" data-rev-rating>5,0</span>
+        <span><span class="stars" aria-label="5 звёзд из 5"></span><small><b data-rev-total>41 отзыв</b> на&nbsp;Яндекс Картах ↗</small></span>
+      </a>
+    </div>
+    <div class="rev-rows" aria-label="Отзывы с Яндекс Карт">
+      <div class="rev-row r1" style="--dur:150s"></div>
+      <div class="rev-row r2" style="--dur:170s"></div>
+    </div>
+    <div class="wrap rev-more">Каждый отзыв — с&nbsp;Яндекс Карт. Нажмите на&nbsp;карточку, чтобы прочитать в&nbsp;оригинале. <a data-yandex-link target="_blank" rel="noopener">Все отзывы на&nbsp;Яндексе</a></div>
   </section>
 
   <!-- ============ 3. Tasks ============ -->
@@ -1924,6 +1988,42 @@ function swipe(el, step){
   }, { passive: true });
   el.addEventListener("touchcancel", () => { x0 = null; }, { passive: true });
 }
+
+/* ---------- Reviews: rows of cards from reviews.json, each row duplicated for a seamless loop ---------- */
+(async () => {
+  const rows = $$(".rev-row");
+  let data;
+  try { data = await fetch("reviews.json", { cache: "no-cache" }).then(r => r.ok ? r.json() : null); } catch {}
+  const star = '<svg aria-hidden="true"><use href="#i-star"/></svg>';
+  $$("#reviews .stars").forEach(s => s.innerHTML = star.repeat(5));
+  const list = Array.isArray(data?.reviews) ? data.reviews.filter(r => r.text) : [];
+  if (!list.length) { document.querySelector(".rev-rows").hidden = true; return; }
+  const esc = t => String(t ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const src = data.source || SITE.yandexReviews;
+  if (data.rating) $$("[data-rev-rating]").forEach(s => s.textContent = data.rating);
+  if (data.total_on_yandex) {
+    const n = data.total_on_yandex, m10 = n % 10, m100 = n % 100;
+    const w = m10 === 1 && m100 !== 11 ? "отзыв" : m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14) ? "отзыва" : "отзывов";
+    $$("[data-rev-total]").forEach(s => s.textContent = `${n} ${w}`);
+  }
+  const M = ["января","февраля","марта","апреля","мая","июня","июля","августа","сентября","октября","ноября","декабря"];
+  const fmt = d => { const [y, m, dd] = String(d).split("-"); return M[m - 1] ? `${+dd} ${M[m - 1]} ${y}` : ""; };
+  const card = r => {
+    const n = (r.name || "").trim().replace(/^Инкогнито.*/, "Аноним") || "Аноним";
+    return `<a class="rcard${r.highlight ? " has-hl" : ""}" href="${esc(src)}" target="_blank" rel="noopener" data-yandex-link>
+      <div class="rc-top"><span class="stars" aria-label="5 звёзд из 5">${star.repeat(5)}</span><span>${fmt(r.date)}</span></div>
+      ${r.highlight ? `<p class="rc-hl">${esc(r.highlight)}</p>` : ""}
+      <p class="rc-text">${esc(r.text)}</p>
+      <div class="rc-foot"><span class="rc-who"><span class="rc-ava" aria-hidden="true">${esc(n[0].toUpperCase())}</span><span>${esc(n)}</span></span>
+      <span class="rc-src">${r.truncated ? "Читать полностью ↗" : "Яндекс Карты ↗"}</span></div></a>`;
+  };
+  const half = Math.ceil(list.length / 2);
+  [list.slice(0, half), list.slice(half)].forEach((items, i) => {
+    if (!rows[i]) return;
+    const html = items.map(card).join("");
+    rows[i].innerHTML = html + `<div class="dup" aria-hidden="true">${html.replaceAll('<a class="rcard', '<a tabindex="-1" class="rcard')}</div>`;
+  });
+})();
 
 /* ---------- Cases gallery: big cards and the strip, both swipe; the strip follows the big card ---------- */
 // Настоящие кейсы лежат в cases.json (их публикует бот по сделкам из amoCRM, новые первыми).
