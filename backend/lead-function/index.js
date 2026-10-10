@@ -62,8 +62,8 @@ function samaraTime() {
 }
 
 const amoDomain = () => env("AMO_DOMAIN").replace(/^https?:\/\//, "").replace(/\/.*$/, "");
-const amoApi = (path, body) => fetch(`https://${amoDomain()}${path}`, {
-  method: body ? "POST" : "GET",
+const amoApi = (path, body, method) => fetch(`https://${amoDomain()}${path}`, {
+  method: method || (body ? "POST" : "GET"),
   headers: { Authorization: `Bearer ${env("AMO_TOKEN")}`, "Content-Type": "application/json" },
   body: body ? JSON.stringify(body) : undefined,
   signal: timeout(8000)
@@ -202,6 +202,36 @@ function normPhone(v) {
   if (d.length === 10 && d[0] === "9") return "+7" + d;
   return "";
 }
+// Клиент прислал номер после заявки: телефон — в контакт сделки, примечание — в сделку, уведомление — в MAX
+async function botPhone(data) {
+  const messenger = MESSENGERS[data.messenger] || "мессенджер";
+  const leadId = Number(data.lead_id), rawPhone = clip(data.phone, 30), phone = normPhone(rawPhone) || rawPhone;
+  const who = [clip(data.name, 80) || "клиент", data.username && "@" + clip(data.username, 64)].filter(Boolean).join(" ");
+  let saved = false;
+  if (leadId && phone && env("AMO_DOMAIN") && env("AMO_TOKEN")) {
+    try {
+      const lead = await amoApi(`/api/v4/leads/${leadId}?with=contacts`);
+      const contactId = lead?._embedded?.contacts?.[0]?.id;
+      if (contactId) {
+        const contact = await amoApi(`/api/v4/contacts/${contactId}`);
+        const phones = (contact.custom_fields_values || []).find(f => f.field_code === "PHONE")?.values || [];
+        if (!phones.some(v => String(v.value).replace(/\D/g, "").endsWith(phone.replace(/\D/g, "").slice(-10)))) {
+          await amoApi(`/api/v4/contacts/${contactId}`, { custom_fields_values: [{ field_code: "PHONE",
+            values: [...phones.map(v => ({ value: v.value, enum_code: v.enum_code || "WORK" })), { value: phone, enum_code: "WORK" }] }] }, "PATCH");
+        }
+      }
+      await amoApi(`/api/v4/leads/${leadId}/notes`, [{ note_type: "common", params: { text: `Клиент оставил телефон в боте ${messenger}: ${phone}` } }]);
+      saved = true;
+    } catch (e) { console.error(e); }
+  }
+  const msg = [`📞 <b>Клиент оставил телефон</b> (бот-гид, ${messenger})`, ``, `${esc(phone)} — ${esc(who)}`,
+    leadId ? `<a href="https://${esc(amoDomain())}/leads/detail/${leadId}">Сделка в amoCRM №${leadId}</a>${saved ? " — телефон добавлен" : " — ⚠️ телефон не записался, внесите вручную"}` : ""]
+    .filter(Boolean).join("\n");
+  let sent = false;
+  if (env("MAX_TOKEN") && env("MAX_CHAT_ID")) sent = await toMax(msg).then(() => true, e => { console.error(e); return false; });
+  return { ok: saved || sent, amo_id: leadId || null, saved };
+}
+
 async function botLead(data) {
   const messenger = MESSENGERS[data.messenger] || "мессенджер";
   const b = {
@@ -279,7 +309,7 @@ module.exports.handler = async event => {
   if (data.kind === "bot") {
     if (!botAuth) return reply(403, headers, { ok: false });
     if (data.ping) return reply(200, headers, { ok: true });
-    const res = await botLead(data);
+    const res = data.lead_id ? await botPhone(data) : await botLead(data);
     return reply(res.ok ? 200 : 502, headers, res);
   }
 
