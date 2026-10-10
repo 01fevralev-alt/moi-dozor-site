@@ -643,9 +643,11 @@ h3{font-weight:700;letter-spacing:-.025em;line-height:1.15}
 .rev-rows{margin-top:56px;display:flex;flex-direction:column;gap:18px;
   -webkit-mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent);mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent)}
 /* лента — обычная горизонтальная прокрутка: едет сама (скрипт «Reviews»), пальцем/тачпадом листается в обе стороны */
-.rev-row{display:flex;gap:18px;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:none;padding-block:4px;margin-block:-4px}
-.rev-row::-webkit-scrollbar{display:none}
-@media (prefers-reduced-motion:reduce){.rev-rows{-webkit-mask-image:none;mask-image:none}.rev-row .dup{display:none}}
+/* лента — окно, внутри дорожка едет сдвигом (transform): одинаково на iPhone и Android; свайп и перетаскивание мышью — в скрипте «Reviews» */
+.rev-row{overflow:hidden;touch-action:pan-y;padding-block:4px;margin-block:-4px;cursor:grab;user-select:none;-webkit-user-select:none}
+.rev-row.is-drag{cursor:grabbing}
+.rev-track{display:flex;gap:18px;width:max-content;will-change:transform}
+.rev-track .rcard{-webkit-user-drag:none}
 .dup{display:contents}
 .rcard{flex:none;width:360px;display:flex;flex-direction:column;gap:14px;padding:24px 24px 20px;border-radius:20px;border:1px solid var(--line);
   background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,0) 40%),var(--surface);transition:border-color .15s,transform .15s}
@@ -2032,42 +2034,80 @@ function swipe(el, step){
     if (!rows[i]) return;
     const html = items.map(card).join("");
     const dup = `<div class="dup" aria-hidden="true">${html.replaceAll('<a class="rcard', '<a tabindex="-1" class="rcard')}</div>`;
-    rows[i].innerHTML = html + dup + dup; // три копии: есть куда листать в обе стороны, пока лента не перескочит
-    if (!matchMedia("(prefers-reduced-motion:reduce)").matches) autoScroll(rows[i], i ? -1 : 1);
+    rows[i].innerHTML = `<div class="rev-track">${html + dup}</div>`; // две копии: когда первая уехала, незаметно встаём на начало
+    ticker(rows[i], i ? -1 : 1);
   });
 
-  // Сама едет со скоростью «круг за --dur секунд»; от касания, колёсика или наведения мыши — пауза,
-  // через 2 секунды после последнего движения пальцем едет дальше. Перескок на копию — только когда никто не трогает.
-  function autoScroll(el, dir){
-    let W = 0, pos = 0, last = 0, hold = 0, hover = false, seen = true, held = false;
-    const dur = parseFloat(el.style.getPropertyValue("--dur")) || 240;
+  // Сама едет со скоростью «круг за --dur секунд» (при «Уменьшении движения» в телефоне — вдвое медленнее).
+  // Палец или мышь тянут ленту, после отпускания она катится по инерции и через 2 секунды едет дальше сама.
+  // Наведение мыши — пауза. Ленту двигаем сдвигом дорожки, а не прокруткой: прокрутку из скрипта iPhone игнорирует.
+  function ticker(row, dir){
+    const track = row.firstElementChild;
+    const slow = matchMedia("(prefers-reduced-motion:reduce)").matches ? 2 : 1;
+    const dur = (parseFloat(row.style.getPropertyValue("--dur")) || 240) * slow;
+    let W = 0, x = 0, v = 0, last = 0, hold = 0, hover = false, seen = true;
+    let drag = null, moved = 0;
     const measure = () => {
-      const cards = el.querySelectorAll(".rcard"), n = cards.length / 3;
+      const cards = track.querySelectorAll(".rcard"), n = cards.length / 2;
       const w = cards[n].offsetLeft - cards[0].offsetLeft;
-      if (!w) return;
-      pos = W ? pos / W * w : w; W = w; el.scrollLeft = pos;
+      if (w) { x = W ? x / W * w : 0; W = w; }
     };
-    const touch = () => { hold = performance.now() + 2000; };
-    el.addEventListener("pointerdown", touch, { passive: true });
-    el.addEventListener("touchstart", touch, { passive: true });
-    el.addEventListener("touchmove", touch, { passive: true });
-    el.addEventListener("wheel", touch, { passive: true });
-    el.addEventListener("mouseenter", () => hover = true);
-    el.addEventListener("mouseleave", () => hover = false);
-    // прокрутил человек (а не мы) — запоминаем, где он остановился
-    el.addEventListener("scroll", () => { if (Math.abs(el.scrollLeft - pos) > 2) { pos = el.scrollLeft; touch(); } }, { passive: true });
-    new IntersectionObserver(([e]) => seen = e.isIntersecting).observe(el);
-    addEventListener("resize", measure);
-    measure();
+    const wrap = () => { if (W) x = ((x % W) + W) % W; };
+    const paint = () => { track.style.transform = `translate3d(${-x}px,0,0)`; };
+    const pause = () => { hold = performance.now() + 2000; };
+
+    row.addEventListener("pointerdown", e => {
+      if (e.button > 0) return;
+      drag = { id: e.pointerId, x0: e.clientX, off: x, t: performance.now(), lx: e.clientX };
+      moved = 0; v = 0; pause();
+    });
+    row.addEventListener("pointermove", e => {
+      if (!drag || e.pointerId !== drag.id) return;
+      const dx = e.clientX - drag.x0;
+      if (!moved && Math.abs(dx) > 6) { moved = 1; try { row.setPointerCapture(e.pointerId); } catch {} row.classList.add("is-drag"); }
+      if (!moved) return;
+      const now = performance.now(), dt = Math.max(1, now - drag.t);
+      v = -(e.clientX - drag.lx) / dt * 1000;          // px/с, для инерции
+      drag.t = now; drag.lx = e.clientX;
+      x = drag.off - dx; wrap(); paint(); pause();
+    });
+    const end = e => {
+      if (!drag || (e && e.pointerId !== drag.id)) return;
+      drag = null; row.classList.remove("is-drag"); pause();
+      if (!moved) v = 0;
+    };
+    row.addEventListener("pointerup", end);
+    row.addEventListener("pointercancel", end);
+    row.addEventListener("lostpointercapture", end);
+    // Протащил — это не клик по карточке
+    row.addEventListener("click", e => { if (moved) { e.preventDefault(); e.stopPropagation(); moved = 0; } }, true);
+    row.addEventListener("dragstart", e => e.preventDefault());
+    // Тачпад и колёсико с Shift — листают ленту
+    row.addEventListener("wheel", e => {
+      const d = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.shiftKey ? e.deltaY : 0;
+      if (!d) return;
+      e.preventDefault(); x += d; wrap(); paint(); v = 0; pause();
+    }, { passive: false });
+    // Клавиатура: карточка в фокусе — показываем её
+    row.addEventListener("focusin", e => {
+      row.scrollLeft = 0;
+      const c = e.target.closest(".rcard");
+      if (c) { x = c.offsetLeft - 24; wrap(); paint(); hold = Infinity; }
+    });
+    row.addEventListener("focusout", pause);
+    // Пауза при наведении — только от настоящей мыши: телефон после касания шлёт «мышь зашла», а «ушла» — никогда
+    row.addEventListener("pointerenter", e => { if (e.pointerType === "mouse") hover = true; });
+    row.addEventListener("pointerleave", e => { if (e.pointerType === "mouse") hover = false; });
+    new IntersectionObserver(([e]) => seen = e.isIntersecting).observe(row);
+    addEventListener("resize", () => { measure(); wrap(); paint(); });
+    measure(); paint();
+
     const step = t => {
       const dt = Math.min(t - (last || t), 100) / 1000; last = t;
-      if (W && seen && !hover && t > hold) {
-        if (held) { pos = el.scrollLeft; held = false; } // продолжаем с того места, где отпустили
-        pos += dir * W / dur * dt;
-        if (pos > 1.5 * W) pos -= W;
-        if (pos < 0.5 * W) pos += W;
-        el.scrollLeft = pos;
-      } else held = true;
+      if (W && seen && !drag) {
+        if (Math.abs(v) > 5) { x += v * dt; v *= Math.pow(0.05, dt); wrap(); paint(); }   // инерция после свайпа
+        else if (!hover && performance.now() > hold) { v = 0; x += dir * W / dur * dt; wrap(); paint(); }
+      }
       requestAnimationFrame(step);
     };
     requestAnimationFrame(step);
