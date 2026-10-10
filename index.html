@@ -2029,8 +2029,11 @@ function swipe(el, step){
       <div class="rc-foot"><span class="rc-who"><span class="rc-ava" aria-hidden="true">${esc(n[0].toUpperCase())}</span><span>${esc(n)}</span></span>
       <span class="rc-src">${r.truncated ? "Читать полностью ↗" : "Яндекс Карты ↗"}</span></div></a>`;
   };
-  // Отзывы с выделенной фразой идут в начале файла — раскладываем через один, чтобы они были в обеих лентах
-  [list.filter((_, i) => i % 2 === 0), list.filter((_, i) => i % 2 === 1)].forEach((items, i) => {
+  // На телефоне — одна лента со всеми отзывами (вдвое длиннее, поэтому круг вдвое дольше — скорость та же).
+  // На компьютере — две: отзывы с выделенной фразой идут в начале файла, раскладываем через один, чтобы они были в обеих
+  const one = matchMedia("(max-width:720px)").matches;
+  if (one) { rows[1]?.remove(); rows[0].style.setProperty("--dur", parseFloat(rows[0].style.getPropertyValue("--dur")) * 2 + "s"); }
+  (one ? [list] : [list.filter((_, i) => i % 2 === 0), list.filter((_, i) => i % 2 === 1)]).forEach((items, i) => {
     if (!rows[i]) return;
     const html = items.map(card).join("");
     const dup = `<div class="dup" aria-hidden="true">${html.replaceAll('<a class="rcard', '<a tabindex="-1" class="rcard')}</div>`;
@@ -2056,29 +2059,47 @@ function swipe(el, step){
     const paint = () => { track.style.transform = `translate3d(${-x}px,0,0)`; };
     const pause = () => { hold = performance.now() + 2000; };
 
+    // Перетаскивание: палец (touch-события) и мышь (pointer). Скорость броска — по последним 100 мс движения
+    let samples = [];
+    const grab = cx => { drag = { x0: cx, off: x }; moved = 0; v = 0; samples = [[performance.now(), cx]]; pause(); };
+    const follow = cx => {
+      const now = performance.now();
+      samples.push([now, cx]);
+      while (samples.length > 2 && now - samples[0][0] > 100) samples.shift();
+      x = drag.off - (cx - drag.x0); wrap(); paint(); pause();
+    };
+    const release = () => {
+      if (!drag) return;
+      const [t0, x0] = samples[0], [t1, x1] = samples[samples.length - 1];
+      v = moved && t1 - t0 > 0 && performance.now() - t1 < 80 ? -(x1 - x0) / (t1 - t0) * 1000 : 0;
+      drag = null; row.classList.remove("is-drag"); pause();
+    };
+    // Палец: как только видно, что ведут вбок, — лента забирает жест, страница не прокручивается; ведут вверх-вниз — отдаём странице
+    let tx = 0, ty = 0, lock = "";
+    row.addEventListener("touchstart", e => {
+      const t = e.touches[0]; tx = t.clientX; ty = t.clientY; lock = "";
+      grab(t.clientX);
+    }, { passive: true });
+    row.addEventListener("touchmove", e => {
+      if (!drag) return;
+      const t = e.touches[0], dx = t.clientX - tx, dy = t.clientY - ty;
+      if (!lock && Math.abs(dx) + Math.abs(dy) > 5) lock = Math.abs(dx) >= Math.abs(dy) ? "x" : "y";
+      if (lock === "y") { drag = null; return; }
+      if (lock === "x") { e.preventDefault(); moved = 1; follow(t.clientX); }
+    }, { passive: false });
+    row.addEventListener("touchend", release);
+    row.addEventListener("touchcancel", release);
+    // Мышь на компьютере
     row.addEventListener("pointerdown", e => {
-      if (e.button > 0) return;
-      drag = { id: e.pointerId, x0: e.clientX, off: x, t: performance.now(), lx: e.clientX };
-      moved = 0; v = 0; pause();
+      if (e.pointerType !== "mouse" || e.button > 0) return;
+      grab(e.clientX); drag.id = e.pointerId;
     });
     row.addEventListener("pointermove", e => {
-      if (!drag || e.pointerId !== drag.id) return;
-      const dx = e.clientX - drag.x0;
-      if (!moved && Math.abs(dx) > 6) { moved = 1; try { row.setPointerCapture(e.pointerId); } catch {} row.classList.add("is-drag"); }
-      if (!moved) return;
-      const now = performance.now(), dt = Math.max(1, now - drag.t);
-      v = -(e.clientX - drag.lx) / dt * 1000;          // px/с, для инерции
-      drag.t = now; drag.lx = e.clientX;
-      x = drag.off - dx; wrap(); paint(); pause();
+      if (!drag || e.pointerType !== "mouse" || e.pointerId !== drag.id) return;
+      if (!moved && Math.abs(e.clientX - drag.x0) > 6) { moved = 1; try { row.setPointerCapture(e.pointerId); } catch {} row.classList.add("is-drag"); }
+      if (moved) follow(e.clientX);
     });
-    const end = e => {
-      if (!drag || (e && e.pointerId !== drag.id)) return;
-      drag = null; row.classList.remove("is-drag"); pause();
-      if (!moved) v = 0;
-    };
-    row.addEventListener("pointerup", end);
-    row.addEventListener("pointercancel", end);
-    row.addEventListener("lostpointercapture", end);
+    ["pointerup", "pointercancel", "lostpointercapture"].forEach(n => row.addEventListener(n, e => { if (e.pointerType === "mouse") release(); }));
     // Протащил — это не клик по карточке
     row.addEventListener("click", e => { if (moved) { e.preventDefault(); e.stopPropagation(); moved = 0; } }, true);
     row.addEventListener("dragstart", e => e.preventDefault());
@@ -2105,7 +2126,7 @@ function swipe(el, step){
     const step = t => {
       const dt = Math.min(t - (last || t), 100) / 1000; last = t;
       if (W && seen && !drag) {
-        if (Math.abs(v) > 5) { x += v * dt; v *= Math.pow(0.05, dt); wrap(); paint(); }   // инерция после свайпа
+        if (Math.abs(v) > 5) { x += v * dt; v *= Math.pow(0.08, dt); wrap(); paint(); }   // инерция после свайпа
         else if (!hover && performance.now() > hold) { v = 0; x += dir * W / dur * dt; wrap(); paint(); }
       }
       requestAnimationFrame(step);
