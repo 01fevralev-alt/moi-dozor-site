@@ -492,6 +492,8 @@ async function sendLead(lead){
   try {
     // text/plain — «простой» запрос без предварительной CORS-проверки; функция всё равно разбирает JSON
     const r = await fetch(SITE.leadEndpoint, { method: "POST", headers: { "Content-Type": "text/plain" }, body: JSON.stringify(lead), signal: ctrl.signal });
+    // Заявка ушла — окно лид-магнита на других страницах этому посетителю само не открываем
+    if (r.ok) try { localStorage.setItem("lead_sent", Date.now()); } catch {}
     return r.ok;
   } catch { return false; }
   finally { clearTimeout(timer); }
