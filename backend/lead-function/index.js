@@ -21,6 +21,8 @@
 // Заявки со страницы podarok.html (source=podarok) несут ещё promo, gift_status, answers, gift_deadline —
 // всё пишется в примечание к сделке (отдельного поля «Промокод» в amoCRM пока нет) и в сообщение MAX.
 //   ALLOWED_ORIGINS  адреса сайта через запятую; пусто — принимать откуда угодно
+//   BOT_SECRET       ключ для заявок от бота-гида (проект leadmagnet-bot): запрос с заголовком X-Bot-Secret
+//                    принимается без Origin и без телефона (kind: "bot"); пусто — такие заявки не принимаются
 
 const CHANNELS = { call: "позвонить", telegram: "написать в Telegram", max: "написать в MAX", whatsapp: "написать в WhatsApp" };
 const SOURCES = {
@@ -137,7 +139,7 @@ async function toAmo(d) {
       tags: d.tags.map(name => ({ name })),
       contacts: [{
         name: d.contact.name || `Клиент ${d.contact.phone}`,
-        custom_fields_values: [{ field_code: "PHONE", values: [{ value: d.contact.phone, enum_code: "WORK" }] }]
+        ...(d.contact.phone && { custom_fields_values: [{ field_code: "PHONE", values: [{ value: d.contact.phone, enum_code: "WORK" }] }] })
       }]
     }
   };
@@ -191,6 +193,53 @@ async function logMaxChats() {
     : "MAX_CHAT_ID не задан, а групп бот не видит: добавьте бота в группу, напишите там сообщение и отправьте заявку ещё раз");
 }
 
+// Заявка от бота-гида (MAX / Telegram): человек получил PDF и прислал фото, текст или номер.
+// Телефона может не быть. Фото бот сам пересылает в группу MAX следом за этим уведомлением.
+const MESSENGERS = { max: "MAX", telegram: "Telegram" };
+function normPhone(v) {
+  const d = String(v || "").replace(/\D/g, "");
+  if (d.length === 11 && /^[78]/.test(d)) return "+7" + d.slice(1);
+  if (d.length === 10 && d[0] === "9") return "+7" + d;
+  return "";
+}
+async function botLead(data) {
+  const messenger = MESSENGERS[data.messenger] || "мессенджер";
+  const b = {
+    source: clip(data.source, 40), user_id: clip(data.user_id, 30), username: clip(data.username, 64),
+    name: clip(data.name, 80), profile: clip(data.profile, 200), object: clip(data.object, 60),
+    text: clip(data.text, 1000), photos: Math.max(0, Math.min(99, Number(data.photos) || 0)), files: clip(data.files, 200),
+    rawPhone: clip(data.phone, 30)
+  };
+  const phone = normPhone(b.rawPhone);
+  const contact = { name: b.name || `Клиент из ${messenger}`, phone, ad: { utm_source: b.source, utm_medium: data.messenger === "max" ? "max" : "telegram" } };
+  const deal = {
+    name: `Заявка из бота ${messenger}${b.object ? ": " + b.object : ""}`, tags: ["бот-гид", messenger], contact, stage: salesStage(),
+    note: [`Откуда: бот-гид (${b.source}), ${messenger}`, b.object && `Объект: ${b.object}`,
+      b.username && `Ник: @${b.username}`, b.profile && `Профиль: ${b.profile}`, b.user_id && `ID в ${messenger}: ${b.user_id}`,
+      b.rawPhone && `Телефон: ${b.rawPhone}`, b.text && `Сообщение: ${b.text}`, b.photos && `Фото: ${b.photos} шт. — в группе MAX`,
+      b.files && `Файлы: ${b.files}`].filter(Boolean).join("\n")
+  };
+
+  let amoId = null, amoError = null;
+  if (env("AMO_DOMAIN") && env("AMO_TOKEN")) {
+    try { amoId = await toAmo(deal); } catch (e) { amoError = e.message; console.error(e); }
+  }
+  const lines = [`🧲 <b>Заявка из бота-гида (${messenger})</b>`, ``];
+  if (b.object) lines.push(`🏢 Объект: ${esc(b.object)}`);
+  lines.push(`👤 ${esc([b.name || "без имени", b.username && "@" + b.username].filter(Boolean).join(" "))}`);
+  if (b.rawPhone) lines.push(`📞 ${phone ? `+7 (${phone.slice(2, 5)}) ${phone.slice(5, 8)}-${phone.slice(8, 10)}-${phone.slice(10)}` : esc(b.rawPhone)}`);
+  if (b.text) lines.push(`📝 ${esc(b.text)}`);
+  if (b.photos) lines.push(`📷 Фото: ${b.photos} — следующим сообщением`);
+  if (b.profile && /^https:/.test(b.profile)) lines.push(`💬 <a href="${esc(b.profile)}">написать клиенту</a>`);
+  lines.push(`🕒 ${samaraTime()} (Самара)`);
+  if (amoId) lines.push(``, `<a href="https://${esc(amoDomain())}/leads/detail/${amoId}">Сделка в amoCRM №${amoId}</a>`);
+  else if (amoError) lines.push(``, `⚠️ В amoCRM не записалось — внесите вручную`);
+
+  let sent = false;
+  if (env("MAX_TOKEN") && env("MAX_CHAT_ID")) sent = await toMax(lines.join("\n")).then(() => true, e => { console.error(e); return false; });
+  return { ok: Boolean(amoId) || sent, amo_id: amoId };
+}
+
 async function toTelegram(html) {
   const base = (env("TG_API") || "https://api.telegram.org").replace(/\/$/, "");
   const send = chat_id => fetch(`${base}/bot${env("TG_TOKEN")}/sendMessage`, {
@@ -213,9 +262,10 @@ async function toTelegram(html) {
 module.exports.handler = async event => {
   const h = Object.fromEntries(Object.entries(event.headers || {}).map(([k, v]) => [k.toLowerCase(), v]));
   const { ok: originOk, headers } = cors(h.origin || "");
+  const botAuth = Boolean(env("BOT_SECRET")) && h["x-bot-secret"] === env("BOT_SECRET");
   if (event.httpMethod === "OPTIONS") return { statusCode: 204, headers, body: "" };
   if (event.httpMethod !== "POST") return reply(405, headers, { ok: false });
-  if (!originOk) return reply(403, headers, { ok: false });
+  if (!originOk && !botAuth) return reply(403, headers, { ok: false });
 
   let data;
   try {
@@ -223,6 +273,14 @@ module.exports.handler = async event => {
     data = JSON.parse(raw);
   } catch {
     return reply(400, headers, { ok: false, error: "bad json" });
+  }
+
+  // Заявка от бота-гида — только с ключом
+  if (data.kind === "bot") {
+    if (!botAuth) return reply(403, headers, { ok: false });
+    if (data.ping) return reply(200, headers, { ok: true });
+    const res = await botLead(data);
+    return reply(res.ok ? 200 : 502, headers, res);
   }
 
   // Скрытое поле-ловушка: люди его не видят и не заполняют, спам-боты заполняют.
