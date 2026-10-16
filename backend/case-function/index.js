@@ -115,16 +115,19 @@ const noPrices = s => String(s).split(/^\s*итого/im)[0].replace(/\s*\d[\d\s
 
 // Даты amoCRM — секунды; показываем по Самаре
 const ddmm = sec => { const d = new Date((sec + 4 * 3600) * 1000), p = n => String(n).padStart(2, "0"); return `${p(d.getUTCDate())}.${p(d.getUTCMonth() + 1)}.${d.getUTCFullYear()}`; };
-// «Как проходил проект» — только по датам из сделки, без нейросети
+// Срок монтажа на сайте — по числу камер, а не по датам из сделки (там внутренний учёт):
+// до 10 камер — 1 день, до 20 — 2, до 30 — 3, до 40 — 4, 40 и больше — 5
+const installDays = cams => cams ? Math.min(5, Math.floor(cams / 10) + 1) : null;
+// «Как проходил проект» — из сделки без нейросети: осмотр и первый день монтажа, дальше — по сроку от числа камер
 function timeline({ inspect, start, end, result, cams }) {
   const out = [];
   if (inspect) out.push({ date: ddmm(inspect), title: "Осмотр", text: "Осмотрели объект и подготовили смету" });
-  if (start) {
-    const days = end && end >= start ? Math.round((end - start) / 86400) + 1 : 1;
-    out.push({ date: end && end > start ? `${ddmm(start)} – ${ddmm(end)}` : ddmm(start), title: "Монтаж",
-      text: `${cams ? `Установили ${cams} ${cams % 10 === 1 && cams % 100 !== 11 ? "камеру" : [2, 3, 4].includes(cams % 10) && ![12, 13, 14].includes(cams % 100) ? "камеры" : "камер"}` : "Смонтировали систему"}, ${days} ${days === 1 ? "день" : days < 5 ? "дня" : "дней"} работ` });
-  }
-  if (end || start) out.push({ date: ddmm(end || start), title: "Сдача", text: /акт/i.test(result) ? "Настроили доступ с телефона, подписали акт" : "Настроили доступ с телефона и сдали объект" });
+  const first = start || end;
+  if (!first) return out;
+  const days = installDays(cams) || 1, last = first + (days - 1) * 86400;
+  out.push({ date: days > 1 ? `${ddmm(first)} – ${ddmm(last)}` : ddmm(first), title: "Монтаж",
+    text: `${cams ? `Установили ${cams} ${cams % 10 === 1 && cams % 100 !== 11 ? "камеру" : [2, 3, 4].includes(cams % 10) && ![12, 13, 14].includes(cams % 100) ? "камеры" : "камер"}` : "Смонтировали систему"}, ${days} ${days === 1 ? "день" : days < 5 ? "дня" : "дней"} работ` });
+  out.push({ date: ddmm(last), title: "Сдача", text: /акт/i.test(result) ? "Настроили доступ с телефона, подписали акт" : "Настроили доступ с телефона и сдали объект" });
   return out;
 }
 
@@ -145,7 +148,7 @@ async function readLead(id) {
     works: noPrices(bill).slice(0, 1200),
     timeline: timeline({ inspect, start, end, result: g("Результат монтажа"), cams: num(g("Камер (шт)")) }),
     cams: num(g("Камер (шт)")), cable: cable || null,
-    days: start && end && end >= start ? Math.round((end - start) / 86400) + 1 : null,
+    days: installDays(num(g("Камер (шт)"))),
     folder: (link.match(/folders\/([\w-]+)/) || link.match(/[?&]id=([\w-]+)/) || [])[1] || "",
     photosFlag: g("Фото и видео загружены?")
   };
@@ -343,7 +346,6 @@ function draftText(d) {
     "Сделали:", ...c.done.map(s => `- ${esc(s)}`),
     ...(c.result?.length ? ["Что изменилось:", ...c.result.map(s => `- ${esc(s)}`)] : []),
     ...NUMS.map(([label, i]) => `${label}: ${c.nums[i] ?? "—"}`),
-    ...(c.nums[2] > 5 ? [`⚠️ <b>Монтаж ${c.nums[2]} дней</b> — проверьте даты начала и окончания монтажа в сделке. Исправили — напишите в группу <code>кейс ${d.lead}</code>.`] : []),
     `<i>Из CRM на страницу:</i> ${c.timeline?.length ? `ход работ (${c.timeline.map(t => `${esc(t.title.toLowerCase())} ${esc(t.date)}`).join(" · ")})` : "дат нет"}` +
       `${c.works?.length ? ` · работ по счёту: ${c.works.length}` : ""}`, "",
     d.story ? "✍️ История учтена." : "✍️ <b>Для подробной страницы</b> ответьте: <code>история:</code> с чем пришёл клиент · что было особенного на объекте · что изменилось. Можно надиктовать голосом → текстом.",
