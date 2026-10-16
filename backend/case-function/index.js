@@ -113,6 +113,17 @@ const PRIVATE = /частн|дач|квартир|снт/i;
 const noPrices = s => String(s).split(/^\s*итого/im)[0].replace(/\s*\d[\d\s]*(?:[.,]\d+)?\s*(?:₽|руб\.?|р\.)/gi, "").replace(/[ \t]+/g, " ")
   .split("\n").map(l => l.trim()).filter(Boolean).join("\n");
 
+// Камеры — по «Расшифровке счета» монтажника: строки «Монтаж 4 камер улица», «Монтаж внутренней камеры» (без числа — 1).
+// Нет строк монтажа (например, только замена) — по «Настройка и подключение 3 камер». Ниже «Итого» не смотрим
+function camsFromBill(bill) {
+  const lines = String(bill).split(/^\s*итого/im)[0].split("\n").map(l => l.replace(/\s*\d[\d\s]*(?:[.,]\d+)?\s*(?:₽|руб\.?|р\.)/gi, ""));
+  const count = re => lines.filter(l => re.test(l)).reduce((sum, l) => {
+    const m = l.match(/(\d+)\s*(?:шт\.?\s*)?(?:[а-яё]+\s+)?камер/i) || l.match(/камер\S*\s.*?(\d+)\s*шт/i);
+    return sum + (m ? Number(m[1]) : 1);
+  }, 0);
+  return count(/^\s*монтаж(?![а-яё]).*камер/i) || count(/^\s*(настройка|подключение)(?![а-яё]).*камер/i) || null;
+}
+
 // Даты amoCRM — секунды; показываем по Самаре
 const ddmm = sec => { const d = new Date((sec + 4 * 3600) * 1000), p = n => String(n).padStart(2, "0"); return `${p(d.getUTCDate())}.${p(d.getUTCMonth() + 1)}.${d.getUTCFullYear()}`; };
 // Срок монтажа на сайте — по числу камер, а не по датам из сделки (там внутренний учёт):
@@ -141,14 +152,16 @@ async function readLead(id) {
   const billUtp = [...bill.matchAll(/UTP[^\n]*?(\d+)\s*м(?![а-яё])/gi)].reduce((s, m) => s + Number(m[1]), 0);
   const cable = (num(g("Затрачено UTP улица")) || 0) + (num(g("Затрачено UTP внутренний")) || 0) || billUtp;
   const link = g("Папка Контент");
+  // Камер — по счёту монтажника (сколько поставили по факту); в счёте нет — из поля сделки
+  const cams = camsFromBill(bill) || num(g("Количество камер")) || num(g("Камер (шт)"));
   return {
     id, type: g("Тип объекта") || "Объект", city: g("Город"), addrRaw: g("Адрес"),
     private: PRIVATE.test(g("Тип объекта")) || /B2C|частн/i.test(g("Тип клиента")),
     placement: g("Размещение"), service: g("Тип услуги"), note: g("Примечание к монтажу").slice(0, 600),
     works: noPrices(bill).slice(0, 1200),
-    timeline: timeline({ inspect, start, end, result: g("Результат монтажа"), cams: num(g("Камер (шт)")) }),
-    cams: num(g("Камер (шт)")), cable: cable || null,
-    days: installDays(num(g("Камер (шт)"))),
+    timeline: timeline({ inspect, start, end, result: g("Результат монтажа"), cams }),
+    cams, cable: cable || null,
+    days: installDays(cams),
     folder: (link.match(/folders\/([\w-]+)/) || link.match(/[?&]id=([\w-]+)/) || [])[1] || "",
     photosFlag: g("Фото и видео загружены?")
   };
@@ -346,7 +359,7 @@ function draftText(d) {
     "Сделали:", ...c.done.map(s => `- ${esc(s)}`),
     ...(c.result?.length ? ["Что изменилось:", ...c.result.map(s => `- ${esc(s)}`)] : []),
     ...NUMS.map(([label, i]) => `${label}: ${c.nums[i] ?? "—"}`),
-    ...(c.nums[0] ? [] : [`⚠️ <b>Камер не указано</b> — на сайте будет «—», и срок монтажа не посчитается. Заполните «Камер (шт)» в сделке и напишите в группу <code>кейс ${d.lead}</code>.`]),
+    ...(c.nums[0] ? [] : [`⚠️ <b>Камер не указано</b> — на сайте будет «—», и срок монтажа не посчитается. Проверьте строки «Монтаж N камер» в «Расшифровке счета» или поле «Количество камер» в сделке и напишите в группу <code>кейс ${d.lead}</code>.`]),
     `<i>Из CRM на страницу:</i> ${c.timeline?.length ? `ход работ (${c.timeline.map(t => `${esc(t.title.toLowerCase())} ${esc(t.date)}`).join(" · ")})` : "дат нет"}` +
       `${c.works?.length ? ` · работ по счёту: ${c.works.length}` : ""}`, "",
     d.story ? "✍️ История учтена." : "✍️ <b>Для подробной страницы</b> ответьте: <code>история:</code> с чем пришёл клиент · что было особенного на объекте · что изменилось. Можно надиктовать голосом → текстом.",
