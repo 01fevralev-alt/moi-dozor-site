@@ -114,14 +114,17 @@ const noPrices = s => String(s).split(/^\s*итого/im)[0].replace(/\s*\d[\d\s
   .split("\n").map(l => l.trim()).filter(Boolean).join("\n");
 
 // Камеры — по «Расшифровке счета» монтажника: строки «Монтаж 4 камер улица», «Монтаж внутренней камеры» (без числа — 1).
+// Камера должна быть тем, что монтируют: «Монтаж крепления для камер (2 шт)» — не камеры.
 // Нет строк монтажа (например, только замена) — по «Настройка и подключение 3 камер». Ниже «Итого» не смотрим
 function camsFromBill(bill) {
-  const lines = String(bill).split(/^\s*итого/im)[0].split("\n").map(l => l.replace(/\s*\d[\d\s]*(?:[.,]\d+)?\s*(?:₽|руб\.?|р\.)/gi, ""));
-  const count = re => lines.filter(l => re.test(l)).reduce((sum, l) => {
-    const m = l.match(/(\d+)\s*(?:шт\.?\s*)?(?:[а-яё]+\s+)?камер/i) || l.match(/камер\S*\s.*?(\d+)\s*шт/i);
-    return sum + (m ? Number(m[1]) : 1);
+  const lines = String(bill).split(/^\s*итого/im)[0].split("\n").map(l => l.replace(/\s*\d[\d\s]*(?:[.,]\d+)?\s*(?:₽|руб\.?|р\.)/gi, "").trim());
+  const count = start => lines.reduce((sum, l) => {
+    const m = l.match(new RegExp(`^${start}\\s+(?:(\\d+)\\s+)?(?:[а-яё-]+\\s+)?камер`, "i"));
+    if (!m) return sum;
+    const pcs = l.match(/(\d+)\s*шт/i);
+    return sum + Number(m[1] || pcs?.[1] || 1);
   }, 0);
-  return count(/^\s*монтаж(?![а-яё]).*камер/i) || count(/^\s*(настройка|подключение)(?![а-яё]).*камер/i) || null;
+  return count("монтаж") || count("(?:настройка|подключение)(?:\\s+и\\s+(?:настройка|подключение))?") || null;
 }
 
 // Даты amoCRM — секунды; показываем по Самаре
