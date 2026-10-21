@@ -24,7 +24,8 @@
 //   BOT_SECRET       ключ для заявок от бота-гида (проект leadmagnet-bot): запрос с заголовком X-Bot-Secret
 //                    принимается без Origin и без телефона (kind: "bot"); пусто — такие заявки не принимаются.
 //                    Расчёт из бота: object_type, cameras, address → поля сделки (автосмета запускается по числу камер),
-//                    utm {source, medium, campaign = ID поста, content = лид-магнит}. smeta_lead: <id> — вернуть ссылку на смету.
+//                    utm {source, medium, campaign = ID поста, content = лид-магнит}; internet, legal (org | person),
+//                    urgency, urgent — в примечание и сообщение. smeta_lead: <id> — вернуть ссылку на смету.
 
 const CHANNELS = { call: "позвонить", telegram: "написать в Telegram", max: "написать в MAX", whatsapp: "написать в WhatsApp" };
 const SOURCES = {
@@ -203,7 +204,7 @@ async function logMaxChats() {
 const cameras = n => `${n} ${n % 10 === 1 && n % 100 !== 11 ? "камера" : [2, 3, 4].includes(n % 10) && ![12, 13, 14].includes(n % 100) ? "камеры" : "камер"}`;
 
 // Поля сделки для расчёта (ID — из estimates/config/amo.yaml; автосмета smeta-web читает те же поля)
-const F = { cameras: 425887, objectType: 407575, address: 321119, smetaUrl: 425891, contactType: 425735 };
+const F = { cameras: 425887, objectType: 407575, address: 321119, legal: 425889, smetaUrl: 425891, contactType: 425735 };
 const OBJECT_TYPES = ["Частный дом", "Офис", "Склад", "Магазин", "Кафе", "МКД", "Производство", "Строительная площадка",
   "Другое", "СНТ, ДНТ", "Дачный поселок", "Автосервис"];
 function botFields(data, messenger) {
@@ -213,6 +214,7 @@ function botFields(data, messenger) {
   if (OBJECT_TYPES.includes(data.object_type)) f.push({ field_id: F.objectType, values: [{ value: data.object_type }] });
   const addr = clip(data.address, 250);
   if (addr) f.push({ field_id: F.address, values: [{ value: addr }] });
+  if (data.legal === "org") f.push({ field_id: F.legal, values: [{ value: true }] });
   f.push({ field_id: F.contactType, values: [{ value: messenger }] });
   return f;
 }
@@ -279,14 +281,16 @@ async function botLead(data) {
   const cams = Math.round(Number(data.cameras) || 0);
   const calc = cams > 0 || data.object_type || data.address;
   const deal = {
-    name: calc ? `Расчёт из бота ${messenger}: ${[data.object_type, cams && cameras(cams)].filter(Boolean).join(", ")}`
+    name: calc ? `${data.urgent ? "🔥 " : ""}Расчёт из бота ${messenger}: ${[data.object_type, cams && cameras(cams)].filter(Boolean).join(", ")}`
       : `Заявка из бота ${messenger}${b.object ? ": " + b.object : ""}`,
-    tags: ["бот-гид", messenger, ...(calc ? ["расчёт"] : []), ...(u.campaign ? ["контент"] : [])],
+    tags: ["бот-гид", messenger, ...(calc ? ["расчёт"] : []), ...(data.urgent ? ["срочно"] : []), ...(u.campaign ? ["контент"] : [])],
     fields: botFields(data, messenger), contact, stage: salesStage(),
     note: [`Откуда: бот-гид (${b.source}), ${messenger}`, b.object && `Объект: ${b.object}`,
       b.username && `Ник: @${b.username}`, b.profile && `Профиль: ${b.profile}`, b.user_id && `ID в ${messenger}: ${b.user_id}`,
-      b.rawPhone && `Телефон: ${b.rawPhone}`, data.object_type && `Тип объекта: ${clip(data.object_type, 40)}`,
+      b.rawPhone && `Телефон: ${b.rawPhone}`, data.object_type && data.object_type !== b.object && `Тип объекта: ${clip(data.object_type, 40)}`,
       cams && `Камер: ${cams}`, data.cameras === 0 && `Камер: не знает — подобрать инженеру`, data.address && `Адрес: ${clip(data.address, 250)}`,
+      data.internet && `Интернет: ${clip(data.internet, 60)}`, data.legal && `Обращается: ${data.legal === "org" ? "организация или ИП" : "частное лицо"}`,
+      data.urgency && `Когда нужно: ${clip(data.urgency, 60)}`,
       u.campaign && `Пост: ${clip(u.campaign, 60)} (${clip(u.source, 40)}, ${clip(u.content, 60)})`, b.text && `Сообщение: ${b.text}`, b.photos && `Фото: ${b.photos} шт. — в группе MAX`,
       b.files && `Файлы: ${b.files}`].filter(Boolean).join("\n")
   };
@@ -300,6 +304,9 @@ async function botLead(data) {
   lines.push(`👤 ${esc([b.name || "без имени", b.username && "@" + b.username].filter(Boolean).join(" "))}`);
   if (b.rawPhone) lines.push(`📞 ${phone ? `+7 (${phone.slice(2, 5)}) ${phone.slice(5, 8)}-${phone.slice(8, 10)}-${phone.slice(10)}` : esc(b.rawPhone)}`);
   if (data.object_type || cams || data.address) lines.push(`🧮 Расчёт: ${esc([data.object_type, cams ? cameras(cams) : "камер не знает", data.address].filter(Boolean).join(" · "))}`);
+  const about = [data.legal && (data.legal === "org" ? "организация" : "частное лицо"), data.internet && `интернет: ${clip(data.internet, 60)}`,
+    data.urgency && `когда: ${clip(data.urgency, 60)}`].filter(Boolean);
+  if (about.length) lines.push(`${data.urgent ? "🔥" : "ℹ️"} ${esc(about.join(" · "))}`);
   if (u.campaign) lines.push(`📣 Пост ${esc(clip(u.campaign, 60))} · ${esc(clip(u.source, 40))}`);
   if (b.text) lines.push(`📝 ${esc(b.text)}`);
   if (b.photos) lines.push(`📷 Фото: ${b.photos} — следующим сообщением`);
