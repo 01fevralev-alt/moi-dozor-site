@@ -22,7 +22,9 @@
 // всё пишется в примечание к сделке (отдельного поля «Промокод» в amoCRM пока нет) и в сообщение MAX.
 //   ALLOWED_ORIGINS  адреса сайта через запятую; пусто — принимать откуда угодно
 //   BOT_SECRET       ключ для заявок от бота-гида (проект leadmagnet-bot): запрос с заголовком X-Bot-Secret
-//                    принимается без Origin и без телефона (kind: "bot"); пусто — такие заявки не принимаются
+//                    принимается без Origin и без телефона (kind: "bot"); пусто — такие заявки не принимаются.
+//                    Расчёт из бота: object_type, cameras, address → поля сделки (автосмета запускается по числу камер),
+//                    utm {source, medium, campaign = ID поста, content = лид-магнит}. smeta_lead: <id> — вернуть ссылку на смету.
 
 const CHANNELS = { call: "позвонить", telegram: "написать в Telegram", max: "написать в MAX", whatsapp: "написать в WhatsApp" };
 const SOURCES = {
@@ -146,17 +148,22 @@ async function toAmo(d) {
   const { pipeline_id, status_id } = await d.stage.catch(e => { console.warn(`Этапы amoCRM не получены: ${e.message}`); return {}; });
   if (pipeline_id) deal.pipeline_id = pipeline_id;
   if (status_id) deal.status_id = status_id;
-  const fields = d.contact.ad ? await trackingValues(d.contact) : [];
+  const fields = [...(d.contact.ad ? await trackingValues(d.contact) : []), ...(d.fields || [])];
   if (fields.length) deal.custom_fields_values = fields;
 
   let created;
   try { [created] = await amoApi("/api/v4/leads/complex", [deal]); }
   catch (e) {
     if (!deal.custom_fields_values) throw e;
-    // Метки не приняты — сделку всё равно создаём, метки остаются в примечании
-    console.warn(`amoCRM не приняла метки, сделка без них: ${e.message}`);
-    delete deal.custom_fields_values;
-    [created] = await amoApi("/api/v4/leads/complex", [deal]);
+    // Метки не приняты — сделку всё равно создаём, метки остаются в примечании.
+    // Сначала пробуем сохранить поля расчёта (по числу камер запускается автосмета), потом — совсем без полей
+    console.warn(`amoCRM не приняла поля, сделка без меток: ${e.message}`);
+    const retry = d.fields?.length && d.fields.length < fields.length ? [d.fields, null] : [null];
+    for (const [i, v] of retry.entries()) {
+      if (v) deal.custom_fields_values = v; else delete deal.custom_fields_values;
+      try { [created] = await amoApi("/api/v4/leads/complex", [deal]); break; }
+      catch (e2) { if (i === retry.length - 1) throw e2; console.warn(`Поля расчёта тоже не приняты: ${e2.message}`); }
+    }
   }
   const id = created?.id;
   if (id && d.note) await amoApi(`/api/v4/leads/${id}/notes`, [{ note_type: "common", params: { text: d.note } }]).catch(() => {});
@@ -191,6 +198,30 @@ async function logMaxChats() {
   console.warn(found.size
     ? `MAX_CHAT_ID не задан. Бот состоит в группах: ${[...found].map(([id, t]) => `«${t}» = ${id}`).join("; ")}`
     : "MAX_CHAT_ID не задан, а групп бот не видит: добавьте бота в группу, напишите там сообщение и отправьте заявку ещё раз");
+}
+
+const cameras = n => `${n} ${n % 10 === 1 && n % 100 !== 11 ? "камера" : [2, 3, 4].includes(n % 10) && ![12, 13, 14].includes(n % 100) ? "камеры" : "камер"}`;
+
+// Поля сделки для расчёта (ID — из estimates/config/amo.yaml; автосмета smeta-web читает те же поля)
+const F = { cameras: 425887, objectType: 407575, address: 321119, smetaUrl: 425891, contactType: 425735 };
+const OBJECT_TYPES = ["Частный дом", "Офис", "Склад", "Магазин", "Кафе", "МКД", "Производство", "Строительная площадка",
+  "Другое", "СНТ, ДНТ", "Дачный поселок", "Автосервис"];
+function botFields(data, messenger) {
+  const f = [];
+  const n = Math.round(Number(data.cameras) || 0);
+  if (n > 0 && n <= 500) f.push({ field_id: F.cameras, values: [{ value: n }] });
+  if (OBJECT_TYPES.includes(data.object_type)) f.push({ field_id: F.objectType, values: [{ value: data.object_type }] });
+  const addr = clip(data.address, 250);
+  if (addr) f.push({ field_id: F.address, values: [{ value: addr }] });
+  f.push({ field_id: F.contactType, values: [{ value: messenger }] });
+  return f;
+}
+
+// Ссылка на смету, которую автосмета записала в сделку (бот спрашивает, пока не появится)
+async function smetaUrl(leadId) {
+  const lead = await amoApi(`/api/v4/leads/${Number(leadId)}`);
+  const f = (lead.custom_fields_values || []).find(x => x.field_id === F.smetaUrl);
+  return f?.values?.[0]?.value || "";
 }
 
 // Заявка от бота-гида (MAX / Telegram): человек получил PDF и прислал фото, текст или номер.
@@ -241,12 +272,22 @@ async function botLead(data) {
     rawPhone: clip(data.phone, 30)
   };
   const phone = normPhone(b.rawPhone);
-  const contact = { name: b.name || `Клиент из ${messenger}`, phone, ad: { utm_source: b.source, utm_medium: data.messenger === "max" ? "max" : "telegram" } };
+  const u = data.utm || {};
+  const contact = { name: b.name || `Клиент из ${messenger}`, phone, ad: {
+    utm_source: clip(u.source, 40) || b.source, utm_medium: clip(u.medium, 40) || (data.messenger === "max" ? "max" : "telegram"),
+    utm_campaign: clip(u.campaign, 60), utm_content: clip(u.content, 60) } };
+  const cams = Math.round(Number(data.cameras) || 0);
+  const calc = cams > 0 || data.object_type || data.address;
   const deal = {
-    name: `Заявка из бота ${messenger}${b.object ? ": " + b.object : ""}`, tags: ["бот-гид", messenger], contact, stage: salesStage(),
+    name: calc ? `Расчёт из бота ${messenger}: ${[data.object_type, cams && cameras(cams)].filter(Boolean).join(", ")}`
+      : `Заявка из бота ${messenger}${b.object ? ": " + b.object : ""}`,
+    tags: ["бот-гид", messenger, ...(calc ? ["расчёт"] : []), ...(u.campaign ? ["контент"] : [])],
+    fields: botFields(data, messenger), contact, stage: salesStage(),
     note: [`Откуда: бот-гид (${b.source}), ${messenger}`, b.object && `Объект: ${b.object}`,
       b.username && `Ник: @${b.username}`, b.profile && `Профиль: ${b.profile}`, b.user_id && `ID в ${messenger}: ${b.user_id}`,
-      b.rawPhone && `Телефон: ${b.rawPhone}`, b.text && `Сообщение: ${b.text}`, b.photos && `Фото: ${b.photos} шт. — в группе MAX`,
+      b.rawPhone && `Телефон: ${b.rawPhone}`, data.object_type && `Тип объекта: ${clip(data.object_type, 40)}`,
+      cams && `Камер: ${cams}`, data.cameras === 0 && `Камер: не знает — подобрать инженеру`, data.address && `Адрес: ${clip(data.address, 250)}`,
+      u.campaign && `Пост: ${clip(u.campaign, 60)} (${clip(u.source, 40)}, ${clip(u.content, 60)})`, b.text && `Сообщение: ${b.text}`, b.photos && `Фото: ${b.photos} шт. — в группе MAX`,
       b.files && `Файлы: ${b.files}`].filter(Boolean).join("\n")
   };
 
@@ -258,6 +299,8 @@ async function botLead(data) {
   if (b.object) lines.push(`🏢 Объект: ${esc(b.object)}`);
   lines.push(`👤 ${esc([b.name || "без имени", b.username && "@" + b.username].filter(Boolean).join(" "))}`);
   if (b.rawPhone) lines.push(`📞 ${phone ? `+7 (${phone.slice(2, 5)}) ${phone.slice(5, 8)}-${phone.slice(8, 10)}-${phone.slice(10)}` : esc(b.rawPhone)}`);
+  if (data.object_type || cams || data.address) lines.push(`🧮 Расчёт: ${esc([data.object_type, cams ? cameras(cams) : "камер не знает", data.address].filter(Boolean).join(" · "))}`);
+  if (u.campaign) lines.push(`📣 Пост ${esc(clip(u.campaign, 60))} · ${esc(clip(u.source, 40))}`);
   if (b.text) lines.push(`📝 ${esc(b.text)}`);
   if (b.photos) lines.push(`📷 Фото: ${b.photos} — следующим сообщением`);
   if (b.profile && /^https:/.test(b.profile)) lines.push(`💬 <a href="${esc(b.profile)}">написать клиенту</a>`);
@@ -309,6 +352,7 @@ module.exports.handler = async event => {
   if (data.kind === "bot") {
     if (!botAuth) return reply(403, headers, { ok: false });
     if (data.ping) return reply(200, headers, { ok: true });
+    if (data.smeta_lead) return reply(200, headers, { ok: true, url: await smetaUrl(data.smeta_lead).catch(() => "") });
     const res = data.lead_id ? await botPhone(data) : await botLead(data);
     return reply(res.ok ? 200 : 502, headers, res);
   }

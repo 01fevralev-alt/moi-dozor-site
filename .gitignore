@@ -24,3 +24,4 @@ dist/
 build/
 .DS_Store
 CLAUDE.local.md
+backend/lead-function/deploy.sh
