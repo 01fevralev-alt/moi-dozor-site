@@ -869,7 +869,8 @@ async function setup(selfUrl) {
   ].join("\n");
 }
 
-const onEstimateUpdate = require("./estimate-bot.js").handler({ env, max, amo, getJson, putJson, say, btn, answer });
+const sipuni = require("./sipuni-calls.js").calls({ env, say, btn, getJson, putJson, amo });
+const onEstimateUpdate = require("./estimate-bot.js").handler({ env, max, amo, getJson, putJson, say, btn, answer, sipuni });
 
 /* ---------- Вход ---------- */
 function parseForm(body) {
@@ -885,8 +886,12 @@ module.exports.handler = async (event, context) => {
   if (!event.httpMethod && Array.isArray(event.messages)) { await worker(); return { ok: true }; }
 
   const q = event.queryStringParameters || {};
-  if (!env("HOOK_SECRET") || q.s !== env("HOOK_SECRET")) return { statusCode: 403, body: "forbidden" };
   const body = event.isBase64Encoded ? Buffer.from(event.body || "", "base64").toString("utf8") : event.body || "";
+  if (q.src === "sipuni") {
+    try { return await sipuni.receive(q, body); }
+    catch { return {statusCode: 503, headers: {"Content-Type": "application/json"}, body: '{"success":false}'}; }
+  }
+  if (!env("HOOK_SECRET") || q.s !== env("HOOK_SECRET")) return { statusCode: 403, body: "forbidden" };
   const selfUrl = env("SELF_URL") || `https://functions.yandexcloud.net/${context.functionName}`;
 
   if (q.setup) return text200(await setup(selfUrl));

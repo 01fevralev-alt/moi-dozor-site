@@ -12,7 +12,7 @@ const questions = [
 const field = (lead, id) => lead.custom_fields_values?.find(f => f.field_id === id)?.values?.[0]?.value;
 const dealPath = id => '/api/v4/leads/' + id;
 
-function handler({ env, max, amo, getJson, putJson, say, btn, answer }) {
+function handler({ env, max, amo, getJson, putJson, say, btn, answer, sipuni }) {
   const allowed = (user, chat) => Boolean(env('MAX_ESTIMATE_USER_ID')) &&
     String(user) === env('MAX_ESTIMATE_USER_ID') && String(chat) === env('MAX_ESTIMATE_CHAT_ID');
   const sayEstimate = (text, opts) => say(text, {...opts, chat:env('MAX_ESTIMATE_CHAT_ID')});
@@ -141,6 +141,18 @@ function handler({ env, max, amo, getJson, putJson, say, btn, answer }) {
       return true;
     }
     const [,action,id,step,value] = payload.split(':');
+    if (action === 'call') {
+      await answer(cb,msg,'Ищу сделку по звонку');
+      const found = await sipuni.leads(id);
+      if (!found.length) {
+        await sayEstimate('Открытая сделка по звонку пока не найдена. Если Sipuni только что передал звонок в amoCRM, попробуйте ещё раз через минуту.');
+        return true;
+      }
+      await sayEstimate(found.length === 1 ? 'Сделка по звонку найдена.' : 'Выберите сделку по звонку.', {
+        buttons: found.slice(0,10).map(l => [btn(String(l.name || 'Сделка №'+l.id).slice(0,55),'estimate:start:'+l.id)])
+      });
+      return true;
+    }
     const leadId = Number(id);
     if (!Number.isSafeInteger(leadId) || leadId <= 0) return true;
     if (action === 'start') {
