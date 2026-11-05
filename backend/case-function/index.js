@@ -326,14 +326,14 @@ async function uploadImage(buf) {
 
 // Сообщение в группу; lead — чтобы ответ на него попал в нужный черновик. Фото сразу после загрузки
 // бывают «не готовы» — тогда ждём и повторяем.
-async function say(html, { lead, buttons, images, reply } = {}) {
+async function say(html, { lead, buttons, images, reply, chat = env("MAX_CHAT_ID") } = {}) {
   const attachments = [];
   if (images) images.forEach(p => attachments.push({ type: "image", payload: p }));
   if (buttons) attachments.push({ type: "inline_keyboard", payload: { buttons } });
   const body = { text: html, format: "html", ...(attachments.length ? { attachments } : {}), ...(reply ? { link: { type: "reply", mid: reply } } : {}) };
   let res;
   for (let i = 0; i < 5; i++) {
-    try { res = await max(`/messages?chat_id=${encodeURIComponent(env("MAX_CHAT_ID"))}&disable_link_preview=true`, body); break; }
+    try { res = await max(`/messages?chat_id=${encodeURIComponent(chat)}&disable_link_preview=true`, body); break; }
     catch (e) { if (!/not\.ready|attachment/i.test(e.message) || i === 4) throw e; await sleep(1500 * (i + 1)); }
   }
   const mid = res?.message?.body?.mid;
@@ -869,6 +869,8 @@ async function setup(selfUrl) {
   ].join("\n");
 }
 
+const onEstimateUpdate = require("./estimate-bot.js").handler({ env, max, amo, getJson, putJson, say, btn, answer });
+
 /* ---------- Вход ---------- */
 function parseForm(body) {
   const ids = new Set();
@@ -905,6 +907,7 @@ module.exports.handler = async (event, context) => {
     const chat = String(u.message?.recipient?.chat_id ?? "");
     try {
       const said = String(u.message?.body?.text || "").trim();
+      if (await onEstimateUpdate(u)) return text200();
       if (u.update_type === "message_callback") await onCallback(u.callback, u.message);
       // «номер группы» в любой группе, где есть бот, — бот отвечает её номером (для MAX_CHAT_ID)
       else if (u.update_type === "message_created" && !u.message?.sender?.is_bot && chat && /^номер\s+(группы|чата)/i.test(said))

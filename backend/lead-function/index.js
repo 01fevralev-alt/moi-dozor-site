@@ -183,8 +183,14 @@ const maxApi = (path, body) => fetch(MAX_API + path, {
   return text ? JSON.parse(text) : {};
 });
 
-async function toMax(html) {
-  await maxApi(`/messages?chat_id=${encodeURIComponent(env("MAX_CHAT_ID"))}&disable_link_preview=true`, { text: html, format: "html" });
+async function toMax(html, estimateLeadId) {
+  const body = { text: html, format: "html" };
+  if (estimateLeadId && env("MAX_ESTIMATE_ENABLED") === "1") {
+    body.attachments = [{ type: "inline_keyboard", payload: { buttons: [[
+      { type: "callback", text: "Создать смету", payload: `estimate:start:${estimateLeadId}` }
+    ]] } }];
+  }
+  await maxApi(`/messages?chat_id=${encodeURIComponent(env("MAX_CHAT_ID"))}&disable_link_preview=true`, body);
 }
 
 // Помогает узнать номер группы MAX: пишет в лог все группы, где состоит бот
@@ -459,7 +465,7 @@ module.exports.handler = async event => {
   const msg = lines.join("\n");
 
   const notifiers = [];
-  if (env("MAX_TOKEN") && env("MAX_CHAT_ID")) notifiers.push(toMax(msg));
+  if (env("MAX_TOKEN") && env("MAX_CHAT_ID")) notifiers.push(toMax(msg, kind === "lead" ? amoId : null));
   else if (env("MAX_TOKEN")) await logMaxChats();
   if (env("TG_TOKEN") && env("TG_CHAT_ID")) notifiers.push(toTelegram(msg));
   const results = await Promise.allSettled(notifiers);
