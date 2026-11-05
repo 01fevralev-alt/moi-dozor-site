@@ -51,21 +51,21 @@ function handler({ env, max, amo, getJson, putJson, say, btn, answer }) {
       [F.object, v.object], [F.legal, v.legal],
     ];
     if (field(lead, F.url) && Number(field(lead, F.cameras)) !== v.cameras) fields.push([F.recalc, true]);
-    if (v.inn) {
-      const company = lead._embedded?.companies?.[0];
-      if (company) {
-        const defs = await amo('/api/v4/companies/custom_fields');
-        const innField = defs._embedded?.custom_fields?.find(f => f.name.trim().toUpperCase() === 'ИНН');
-        if (innField) await amo('/api/v4/companies/'+company.id, {custom_fields_values:[{field_id:innField.id,values:[{value:v.inn}]}]}, 'PATCH');
-        else throw new Error('missing company INN field');
-      } else {
-        const innId = Number(env('AMO_ESTIMATE_INN_FIELD_ID'));
-        if (!innId) throw new Error('missing estimate INN field');
-        fields.push([innId, v.inn]);
+    let companyMissing = false;
+    if (v.inn && !lead._embedded?.companies?.length) {
+      const result = await amo('/api/v4/companies?query='+encodeURIComponent(v.inn));
+      const matches = (result._embedded?.companies || []).filter(company =>
+        company.custom_fields_values?.some(f => f.field_code === 'N_DADATA_INN' &&
+          f.values?.some(x => String(x.value).trim() === v.inn))
+      );
+      companyMissing = matches.length !== 1 || Boolean(result._links?.next);
+      if (!companyMissing) {
+        await amo(dealPath(state.lead)+'/link', [{to_entity_id:matches[0].id,to_entity_type:'companies'}]);
       }
     }
     await amo('/api/v4/contacts/'+contact.id, {name:v.name}, 'PATCH');
     await amo(dealPath(state.lead), {custom_fields_values:fields.map(([field_id,value]) => ({field_id,values:[{value}]}))}, 'PATCH');
+    return companyMissing;
   }
 
   async function prompt(state, key) {
@@ -108,13 +108,15 @@ function handler({ env, max, amo, getJson, putJson, say, btn, answer }) {
   }
 
   async function finish(state, key) {
+    let companyMissing;
     try {
-      await save(state);
+      companyMissing = await save(state);
       await putJson(key, {...state, mid:null, pending:false});
     } catch {
       await sayEstimate('Не удалось сохранить данные в amoCRM. Ответы сохранены, можно повторить.', {buttons:[[btn('Повторить сохранение','estimate:save:'+state.lead)]]});
       return;
     }
+    if (companyMissing) await sayEstimate("Компания по ИНН не найдена однозначно. Смета будет готова, а компанию можно привязать в amoCRM.");
     await sendResult(state, true);
   }
 
